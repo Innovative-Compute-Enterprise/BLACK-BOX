@@ -1,9 +1,10 @@
-import Header from '../components/ui/header/Header';
-import { createClient } from '../../../utils/supabase/server';
 import Link from 'next/link';
+import { headers } from 'next/headers';
+import { createClient } from '../../../utils/supabase/server';
 import { redirect } from 'next/navigation';
+import Header from '../components/ui/header/Header';
 
-export default async function data({
+export default async function ForgotPassword({
   searchParams,
 }: {
   searchParams: { message: string };
@@ -14,42 +15,48 @@ export default async function data({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) {
-    return redirect('/home');
+  if ( user ) {
+    return redirect('/');
   }
 
-  const signIn = async (formData: FormData) => {
+  const confirmReset = async (formData: FormData) => {
     'use server';
 
+    const origin = headers().get('origin');
     const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
     const supabase = createClient();
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/reset-password`,
     });
 
     if (error) {
-      return redirect('/login?message=Could not authenticate user');
+      return redirect('/forgot-password?message=Could not authenticate user');
     }
 
-    return redirect('/home');
+    return redirect(
+      '/confirm?message=Password Reset link has been sent to your email address'
+    );
   };
 
   return (
     <div>
       <Header />
 
-  
+      <Link
+        href="/"
+        className="py-2 px-4 rounded-md no-underline text-foreground bg-btn-background hover:bg-btn-background-hover text-sm m-4"
+      >
+        Home
+      </Link>
 
-      <div className="w-full px-8 mt-24 sm:max-w-md mx-auto mt-4">
+      <div className="w-full px-8 sm:max-w-md mx-auto mt-4">
         <form
           className="animate-in flex-1 flex flex-col w-full justify-center gap-2 text-foreground mb-4"
-          action={signIn}
+          action={confirmReset}
         >
           <label className="text-md" htmlFor="email">
-            Email
+            Enter Email Address
           </label>
           <input
             className="rounded-md px-4 py-2 bg-inherit border mb-6"
@@ -57,18 +64,9 @@ export default async function data({
             placeholder="you@example.com"
             required
           />
-          <label className="text-md" htmlFor="password">
-            Password
-          </label>
-          <input
-            className="rounded-md px-4 py-2 bg-inherit border mb-6"
-            type="password"
-            name="password"
-            placeholder="••••••••"
-            required
-          />
+
           <button className="bg-indigo-700 rounded-md px-4 py-2 text-foreground mb-2">
-            Sign In
+            Confirm
           </button>
 
           {searchParams?.message && (
@@ -79,20 +77,10 @@ export default async function data({
         </form>
 
         <Link
-          href="/forgot-password"
-          className="rounded-md no-underline text-indigo-400 text-sm "
-        >
-          Forgotten Password.
-        </Link>
-
-        <br />
-        <br />
-
-        <Link
-          href="/signup"
+          href="/login"
           className="rounded-md no-underline text-foreground text-sm"
         >
-          Dont have an Account? Sign Up
+          Remember your password? Sign in
         </Link>
       </div>
     </div>
