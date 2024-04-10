@@ -17,14 +17,17 @@ interface PasswordSignInProps {
 export default function PasswordSignIn({
   redirectMethod
 }: PasswordSignInProps) {
-  const router = redirectMethod === 'client' ? useRouter() : null;
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    setIsSubmitting(true); // Disable the button while the request is being handled
-    await handleRequest(e, signInWithPassword, router);
+    setIsSubmitting(true); 
+    if (redirectMethod === 'client') {
+      await handleRequest(e, signInWithPassword, router);
+    } else { // Disable the button while the request is being handled
     setIsSubmitting(false);
   };
+}
 
   return (
     <div className="my-8">
@@ -38,7 +41,7 @@ export default function PasswordSignIn({
             <label htmlFor="email">Email</label>
             <input
               id="email"
-              placeholder="name@example.com"
+              placeholder={"name@example.com"}
               type="email"
               name="email"
               autoCapitalize="none"
@@ -49,7 +52,7 @@ export default function PasswordSignIn({
             <label htmlFor="password">Password</label>
             <input
               id="password"
-              placeholder="Password"
+              placeholder={"Password"}
               type="password"
               name="password"
               autoComplete="current-password"

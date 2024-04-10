@@ -9,19 +9,21 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 interface SignUpProps {
-  allowEmail: boolean;
   redirectMethod: string;
 }
 
-export default function SignUp({ allowEmail, redirectMethod }: SignUpProps) {
-  const router = redirectMethod === 'client' ? useRouter() : null;
+export default function SignUp({ redirectMethod }: SignUpProps) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setIsSubmitting(true); // Disable the button while the request is being handled
-    await handleRequest(e, signUp, router);
+    if (redirectMethod === 'client') {
+      await handleRequest(e, signUp, router);
+    } else {    
     setIsSubmitting(false);
   };
+};
 
   return (
     <div className="my-8">
@@ -35,7 +37,7 @@ export default function SignUp({ allowEmail, redirectMethod }: SignUpProps) {
             <label htmlFor="email">Email</label>
             <input
               id="email"
-              placeholder="name@example.com"
+              placeholder={"name@example.com"}
               type="email"
               name="email"
               autoCapitalize="none"
@@ -46,7 +48,7 @@ export default function SignUp({ allowEmail, redirectMethod }: SignUpProps) {
             <label htmlFor="password">Password</label>
             <input
               id="password"
-              placeholder="Password"
+              placeholder={"Password"}
               type="password"
               name="password"
               autoComplete="current-password"

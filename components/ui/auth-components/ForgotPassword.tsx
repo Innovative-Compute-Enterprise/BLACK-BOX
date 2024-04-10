@@ -6,7 +6,6 @@ import { requestPasswordUpdate } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-
 // Define prop type with allowEmail boolean
 interface ForgotPasswordProps {
   redirectMethod: string;
@@ -17,14 +16,17 @@ export default function ForgotPassword({
   redirectMethod,
   disableButton
 }: ForgotPasswordProps) {
-  const router = redirectMethod === 'client' ? useRouter() : null;
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setIsSubmitting(true); // Disable the button while the request is being handled
-    await handleRequest(e, requestPasswordUpdate, router);
+    if (redirectMethod === 'client') {
+      await handleRequest(e, requestPasswordUpdate, router);
+    } else {    
     setIsSubmitting(false);
   };
+}
 
   return (
     <div className="my-8">
@@ -38,7 +40,7 @@ export default function ForgotPassword({
             <label htmlFor="email">Email</label>
             <input
               id="email"
-              placeholder="name@example.com"
+              placeholder={"name@example.com"}
               type="email"
               name="email"
               autoCapitalize="none"

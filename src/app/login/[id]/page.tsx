@@ -82,7 +82,7 @@ export default async function SignIn({
             <UpdatePassword redirectMethod={redirectMethod} />
           )}
           {viewProp === 'signup' && (
-            <Signup allowEmail={allowEmail} redirectMethod={redirectMethod} />
+            <Signup redirectMethod={redirectMethod} />
           )}
           {viewProp !== 'update_password' &&
             viewProp !== 'signup' 

@@ -13,14 +13,17 @@ interface UpdatePasswordProps {
 export default function UpdatePassword({
   redirectMethod
 }: UpdatePasswordProps) {
-  const router = redirectMethod === 'client' ? useRouter() : null;
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setIsSubmitting(true); // Disable the button while the request is being handled
-    await handleRequest(e, updatePassword, router);
+    if (redirectMethod === 'client') {
+      await handleRequest(e, updatePassword, router);
+    } else { 
     setIsSubmitting(false);
   };
+}
 
   return (
     <div className="my-8">
@@ -34,7 +37,7 @@ export default function UpdatePassword({
             <label htmlFor="password">New Password</label>
             <input
               id="password"
-              placeholder="Password"
+              placeholder={"Password"}
               type="password"
               name="password"
               autoComplete="current-password"
@@ -43,7 +46,7 @@ export default function UpdatePassword({
             <label htmlFor="passwordConfirm">Confirm New Password</label>
             <input
               id="passwordConfirm"
-              placeholder="Password"
+              placeholder={"Password"}
               type="password"
               name="passwordConfirm"
               autoComplete="current-password"
