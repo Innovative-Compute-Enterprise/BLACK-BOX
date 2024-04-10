@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+.yarn/
 .yarn/install-state.gz
 
 # testing
@@ -34,3 +35,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE - VSCode
+.vscode/
+
+# build directories
+/dist/ # Add this if you have a directory for other build outputs
+
+# macOS files
+.DS_Store
+
+# General log files
+*.log
+
+# files specific to your project that may contain sensitive info or local configurations
+*.env # if you decide to ignore all env files
+*.config.js # if you have config files that shouldn't be shared
