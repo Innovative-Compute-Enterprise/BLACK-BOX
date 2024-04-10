@@ -21,12 +21,18 @@ export default function ForgotPassword({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setIsSubmitting(true); // Disable the button while the request is being handled
-    if (redirectMethod === 'client') {
-      await handleRequest(e, requestPasswordUpdate, router);
-    } else {    
-    setIsSubmitting(false);
+    try {
+      if (redirectMethod === 'client') {
+        await handleRequest(e, requestPasswordUpdate, router);
+      }
+      // Other conditions for handling different redirect methods could go here
+    } catch (error) {
+      console.error(error);
+      // Handle any errors here, such as displaying an error message to the user
+    } finally {
+      setIsSubmitting(false); // Re-enable the button after the request is handled
+    }
   };
-}
 
   return (
     <div className="my-8">
@@ -54,8 +60,8 @@ export default function ForgotPassword({
             type="submit"
             className="mt-1"
             loading={isSubmitting}
-            disabled={disableButton}
-          >
+            disabled={disableButton || isSubmitting} // Ensure both are booleans
+            >
             Send Email
           </Button>
         </div>
@@ -67,7 +73,7 @@ export default function ForgotPassword({
       </p>
       <p>
         <Link href="/login/signup" className="font-light text-sm">
-          Don't have an account? Sign up
+          Don&apos;t have an account? Sign up
         </Link>
       </p>
     </div>

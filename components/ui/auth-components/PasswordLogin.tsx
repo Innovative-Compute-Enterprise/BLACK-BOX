@@ -77,7 +77,7 @@ export default function PasswordSignIn({
       </p>
       <p>
         <Link href="/login/signup" className="font-light text-sm">
-          Don't have an account? Sign up
+          Don&apos;t have an account? Sign up
         </Link>
       </p>
     </div>
