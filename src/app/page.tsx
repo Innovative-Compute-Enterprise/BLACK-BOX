@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import React from 'react'
 import { createClient } from '../../utils/supabase/server'
-import  SignOut  from './components/ui/auth-components/SignOut';
+import  SignOut  from '../../components/ui/auth-components/SignOut';
 
 export default async function PrivatePage() {
   const supabase = createClient();

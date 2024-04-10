@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Roboto } from "../../../fonts/font";
+import { Roboto } from "../../../src/app/fonts/font";
 
 const navigation = [
   { name: 'Home', href: '/' },

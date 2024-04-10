@@ -6,7 +6,7 @@ import { signInWithPassword } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
-import AuthSign from '../../ui/0auth-social/AuthSign';
+import AuthSign from '../0auth-social/AuthSign';
 
 // Define prop type with allowEmail boolean
 interface PasswordSignInProps {

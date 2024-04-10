@@ -1,5 +1,5 @@
 'use client'
-import { signInWithOAuth } from '../../../../../utils/auth-helpers/client'; // Assuming correct import path
+import { signInWithOAuth } from '../../../utils/auth-helpers/client'; // Assuming correct import path
 import { useState } from 'react';
 import GitHub from '../../icons/Github';
 

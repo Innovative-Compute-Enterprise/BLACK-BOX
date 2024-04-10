@@ -7,11 +7,11 @@ import {
   getDefaultSignInView,
   getRedirectMethod
 } from '@/utils/auth-helpers/settings';
-import BlackBox from '../../components/icons/BlackBox';
-import ForgotPassword from '../../components/ui/auth-components/ForgotPassword';
-import PasswordLogin from '../../components/ui/auth-components/PasswordLogin';
-import Signup from '../../components/ui/auth-components/Signup';
-import UpdatePassword from '../../components/ui/auth-components/UpdatePassword';
+import BlackBox from '../../../../components/icons/BlackBox';
+import ForgotPassword from '../../../../components/ui/auth-components/ForgotPassword';
+import PasswordLogin from '../../../../components/ui/auth-components/PasswordLogin';
+import Signup from '../../../../components/ui/auth-components/Signup';
+import UpdatePassword from '../../../../components/ui/auth-components/UpdatePassword';
 
 
 export default async function SignIn({

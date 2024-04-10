@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import { PropsWithChildren } from 'react';
 import { getURL } from '../../utils/helpers';
 import { Suspense } from 'react';
-import { Toaster } from './components/ui/Toasts/toaster';
-import './globals.css';
+import { Toaster } from '../../components/ui/Toasts/toaster';
+import '../../styles/main.css';
 
 const meta = {
   title: 'Black-Box',
