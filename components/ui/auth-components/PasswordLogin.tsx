@@ -30,34 +30,43 @@ export default function PasswordSignIn({
 }
 
   return (
-    <div className="my-8">
+    <div className="my-6">
       <form
         noValidate={true}
         className="mb-4"
         onSubmit={(e) => handleSubmit(e)}
       >
-        <div className="grid gap-2">
-          <div className="grid gap-1">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              placeholder={"name@example.com"}
-              type="email"
-              name="email"
-              autoCapitalize="none"
-              autoComplete="email"
-              autoCorrect="off"
-              className="w-full p-3 rounded-md bg-zinc-800"
-            />
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              placeholder={"Password"}
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              className="w-full p-3 rounded-md bg-zinc-800"
-            />
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+
+            <div className='my-2'>
+              <label 
+              htmlFor="email">Email</label>
+              <input
+                id="email"
+                placeholder={"name@example.com"}
+                type="email"
+                name="email"
+                autoCapitalize="none"
+                autoComplete="email"
+                autoCorrect="off"
+                className="w-full p-3 rounded-md bg-zinc-800"
+              />
+            </div>
+
+            <div className='my-2'>
+              <label 
+              htmlFor="password">Password</label>
+              <input
+                id="password"
+                placeholder={"Password"}
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                className="w-full p-3 rounded-md bg-zinc-800"
+              />
+            </div>
+
           </div>
           <Button
             variant="slim"
@@ -69,14 +78,16 @@ export default function PasswordSignIn({
           </Button>
         </div>
       </form>
+      <div className='space-y-2'>
       <AuthSign />
+      </div>
       <p>
-        <Link href="/login/forgot_password" className="font-light text-sm">
+        <Link href="/login/forgot_password" className="font-light text-sm my-1">
           Forgot your password?
         </Link>
       </p>
       <p>
-        <Link href="/login/signup" className="font-light text-sm">
+        <Link href="/login/signup" className="font-light text-sm my-1">
           Don&apos;t have an account? Sign up
         </Link>
       </p>
