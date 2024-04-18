@@ -12,7 +12,7 @@ const NavLinks = () => {
   return (
     <nav className="grid grid-cols-1 md:grid-cols-3 gap-4 p-2 mt-6">
       <div>
-        <h2 className="text-[15px] text-white my-1">Main</h2>
+        <h2 className="text-[15px] text-white my-1 opacity-50">Main</h2>
         {navigation.map((item, index) => {
           if (index === 0) { // Only show the Home link in the first column
             return (
@@ -28,7 +28,7 @@ const NavLinks = () => {
         {/* More links for column 2 */}
       </div>
       <div>
-        <h2 className="text-[15px] text-white my-1">Chat</h2>
+        <h2 className="text-[15px] text-white my-1 opacity-50">Chat</h2>
         {navigation.map((item, index) => {
           if (index === 1) { // Only show the Chat link in the second column
             return (
@@ -43,7 +43,7 @@ const NavLinks = () => {
         })}
       </div>
       <div>
-        <h2 className="text-[15px] text-white my-1">Settings</h2>
+        <h2 className="text-[15px] text-white my-1 opacity-50">Settings</h2>
         {navigation.map((item, index) => {
           if (index === 2) { // Only show the Account link in the third column
             return (
