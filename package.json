@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@radix-ui/react-toast": "^1.1.5",
+    "@stripe/stripe-js": "^3.3.0",
     "@supabase/ssr": "^0.1.0",
     "@supabase/supabase-js": "^2.41.1",
     "@vercel/analytics": "^1.2.2",
