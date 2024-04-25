@@ -14,8 +14,8 @@ const TRIAL_PERIOD_DAYS = 0;
 // Note: supabaseAdmin uses the SERVICE_ROLE_KEY which you must only use in a secure server-side context
 // as it has admin privileges and overwrites RLS policies!
 const supabaseAdmin = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ozlejjfsqsmsbrnlyiyl.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96bGVqamZzcXNtc2Jybmx5aXlsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcxMTkzNzU2OCwiZXhwIjoyMDI3NTEzNTY4fQ.qezO_aBQlyMOjdAxcvajKVZiKsEb2gDMaoFcB4ahtYg'
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
 const upsertProductRecord = async (product: Stripe.Product) => {

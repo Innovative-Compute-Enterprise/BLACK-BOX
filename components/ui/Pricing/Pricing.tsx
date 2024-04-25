@@ -29,7 +29,7 @@ interface Props {
   subscription: SubscriptionWithProduct | null;
 }
 
-type BillingInterval = 'lifetime' | 'year' | 'month';
+type BillingInterval =  'year' | 'month';
 
 export default function Pricing({ user, products, subscription }: Props) {
   const intervals = Array.from(
