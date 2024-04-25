@@ -1,7 +1,7 @@
 'use client';
 
 import { SignOut } from '@/utils/auth-helpers/server';
-import Button from '../Button/Button';
+import Button from '@/components/ui/Button';
 
 
 export default function SignOutButton({ pathName = '/' }) {

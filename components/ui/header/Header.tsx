@@ -34,7 +34,7 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed items-center flex flex-col flex-nowrap justify-start w-full p-5 z-0 aspect-auto h-auto gap-5">
+    <header className="fixed items-center flex flex-col flex-nowrap justify-start w-full p-5 z-0 aspect-auto gap-5">
       <div 
         className='flex flex-col justify-between w-full p-2.5 cursor-pointer max-w-[600px] z-[998] bg-[#0E0E0E] border-[#ffffff]/5 border rounded-[20px]' 
         onClick={() => setIsExpanded(!isExpanded)}
