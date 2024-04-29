@@ -1,5 +1,4 @@
 'use client';
-
 import Button from '@/components/ui/Button';
 import type { Tables } from '@/types_db';
 import { getStripe } from '@/utils/stripe/client';
@@ -143,30 +142,32 @@ export default function Pricing({ user, products, subscription }: Props) {
           </div>
           <div className="mt-12 space-y-4 sm:mt-16 sm:space-y-0 flex flex-wrap justify-center gap-6 lg:max-w-4xl lg:mx-auto xl:max-w-none xl:mx-0">
             {products.map((product) => {
-              const price = product?.prices?.find(
-                (price) => price.interval === billingInterval
-              );
-              if (!price) return null;
-              const priceString = new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: price.currency!,
-                minimumFractionDigits: 0
-              }).format((price?.unit_amount || 0) / 100);
+              const price = product.prices.find((p) => p.interval === billingInterval);
+
+              // Format the price if found, else set a default message
+              const priceString = price
+                ? new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: price.currency!,
+                    minimumFractionDigits: 0
+                  }).format((price.unit_amount || 0) / 100)
+                : 'Contact us for pricing';
+
               return (
                 <div
-                  key={product.id}
-                  className={cn(
-                    'flex flex-col rounded-lg shadow-sm divide-y divide-zinc-600 bg-zinc-900',
-                    {
-                      'border border-pink-500': subscription
-                        ? product.name === subscription?.prices?.products?.name
-                        : product.name === 'Freelancer'
-                    },
-                    'flex-1', // This makes the flex item grow to fill the space
-                    'basis-1/3', // Assuming you want each card to take up roughly a third of the container's width
-                    'max-w-xs' // Sets a maximum width to the cards to prevent them from getting too large
-                  )}
-                >
+                key={product.id}
+                className={cn(
+                  'flex flex-col rounded-lg shadow-sm divide-y divide-zinc-600 bg-zinc-900',
+                  {
+                    'border border-pink-500': subscription
+                      ? product.name === subscription?.prices?.products?.name
+                      : product.name === 'Freelancer'
+                  },
+                  'flex-1', // This makes the flex item grow to fill the space
+                  'basis-1/3', // Assuming you want each card to take up roughly a third of the container's width
+                  'max-w-xs' // Sets a maximum width to the cards to prevent them from getting too large
+                )}
+              >
                   <div className="p-6">
                     <h2 className="text-2xl font-semibold leading-6 text-white">
                       {product.name}
@@ -174,21 +175,29 @@ export default function Pricing({ user, products, subscription }: Props) {
                     <p className="mt-4 text-zinc-300">{product.description}</p>
                     <p className="mt-8">
                       <span className="text-5xl font-extrabold white">
-                        {priceString}
+                        {price ? priceString : 'N/A'}
                       </span>
-                      <span className="text-base font-medium text-zinc-100">
-                        /{billingInterval}
-                      </span>
+                      {price && (
+                        <span className="text-base font-medium text-zinc-100">
+                          /{billingInterval}
+                        </span>
+                      )}
                     </p>
                     <Button
                       variant="slim"
                       type="button"
-                      loading={priceIdLoading === price.id}
-                      onClick={() => handleStripeCheckout(price)}
+                      loading={priceIdLoading === price?.id}
+                      onClick={() => price && handleStripeCheckout(price)}
                       className="block w-full py-2 mt-8 text-sm font-semibold text-center text-white rounded-md hover:bg-zinc-900"
+                      disabled={!price}
                     >
                       {subscription ? 'Manage' : 'Subscribe'}
                     </Button>
+                    {!price && (
+                      <p className="text-sm text-zinc-500 mt-2">
+                        Please contact us for details on this plan.
+                      </p>
+                    )}
                   </div>
                 </div>
               );

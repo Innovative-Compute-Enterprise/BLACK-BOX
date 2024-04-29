@@ -23,7 +23,9 @@ export default async function Account() {
   .from('subscriptions')
   .select('*, prices(*, products(*))')
   .in('status', ['trialing', 'active'])
-  .maybeSingle();
+  .order('current_period_end', { ascending: false })
+  .limit(1)
+  .single();
 
 if (error) {
   console.log(error);
@@ -46,7 +48,7 @@ const { data: products } = await supabase
     <main>
     <Header />
     <section className='h-auto'>
-      <div className="max-w-5xl pt-12 px-4 mx-auto mb-24 space-y-16">
+      <div className="max-w-5xl pt-12 px-4 mx-auto mb-24 space-y-10">
       <Pricing
             user={user}
             products={products ?? []}
