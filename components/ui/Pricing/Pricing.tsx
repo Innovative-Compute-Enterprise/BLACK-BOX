@@ -22,7 +22,6 @@ interface PriceWithProduct extends Price {
 interface SubscriptionWithProduct extends Subscription {
   prices: PriceWithProduct | null;
 }
-
 interface Props {
   user: User | null | undefined;
   products: ProductWithPrices[];
