@@ -7,11 +7,12 @@ import {
   getDefaultSignInView,
   getRedirectMethod
 } from '@/utils/auth-helpers/settings';
-import BlackBox from '../../../../components/icons/BlackBox';
-import ForgotPassword from '../../../../components/ui/auth-components/ForgotPassword';
-import PasswordLogin from '../../../../components/ui/auth-components/PasswordLogin';
-import Signup from '../../../../components/ui/auth-components/Signup';
-import UpdatePassword from '../../../../components/ui/auth-components/UpdatePassword';
+import BlackBox from '@/components/icons/BlackBox';
+import ForgotPassword from '@/components/ui/auth-components/ForgotPassword';
+import PasswordLogin from '@/components/ui/auth-components/PasswordLogin';
+import Signup from '@/components/ui/auth-components/Signup';
+import UpdatePassword from '@/components/ui/auth-components/UpdatePassword';
+import Pricing from '@/components/ui/Pricing/Pricing';
 
 
 export default async function SignIn({
@@ -45,6 +46,23 @@ export default async function SignIn({
     data: { user }
   } = await supabase.auth.getUser();
 
+  const { data: subscription, error } = await supabase
+  .from('subscriptions')
+  .select('*, prices(*, products(*))')
+  .in('status', ['trialing', 'active'])
+  .order('current_period_end', { ascending: false })
+  .limit(1)
+  .single();
+  
+  const { data: products } = await supabase
+  .from('products')
+  .select('*, prices(*)')
+  .eq('active', true)
+  .eq('prices.active', true)
+  .order('metadata->index')
+  .order('unit_amount', { referencedTable: 'prices' });
+
+
   if (user && viewProp !== 'update_password') {
     return redirect('/');
   } else if (!user && viewProp === 'update_password') {
@@ -53,6 +71,11 @@ export default async function SignIn({
 
   return (
     <div className="flex justify-center">
+       <Pricing
+            user={user}
+            products={products ?? []}
+            subscription={subscription}
+          /> 
       <div className="flex flex-col justify-between max-w-lg p-3 m-auto w-[380px] translate-y-1/4 ">
         <div className="flex justify-center my-1">
           <BlackBox />
