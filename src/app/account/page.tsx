@@ -45,17 +45,8 @@ const { data: products } = await supabase
   return (
     <main>
     <Header />
-    <section className='space-y-16 h-auto'>
-      <div className="max-w-5xl pt-32 px-4 mx-auto">
-        <div className="sm:align-center sm:flex sm:flex-col">
-          <h1 className="text-5xl font-extrabold text-white text-center ">
-            Account
-          </h1>
-          <p className="max-w-xl m-auto mt-2 text-lg text-[#CDCDCD] sm:text-center">
-            We partnered with Stripe for a simplified billing.
-          </p>
-        </div>
-      </div>
+    <section className='h-auto'>
+      <div className="max-w-5xl pt-12 px-4 mx-auto mb-24 space-y-16">
       <Pricing
             user={user}
             products={products ?? []}
@@ -64,6 +55,7 @@ const { data: products } = await supabase
         <CustomerPortalForm subscription={subscription} />
         <NameForm userName={userDetails?.full_name ?? ''} />
         <EmailForm userEmail={user.email} />
+        </div>
     </section>
     </main>
   );

@@ -22,6 +22,7 @@ interface PriceWithProduct extends Price {
 interface SubscriptionWithProduct extends Subscription {
   prices: PriceWithProduct | null;
 }
+
 interface Props {
   user: User | null | undefined;
   products: ProductWithPrices[];
@@ -49,7 +50,7 @@ export default function Pricing({ user, products, subscription }: Props) {
 
     if (!user) {
       setPriceIdLoading(undefined);
-      return router.push('/signin/signup');
+      return router.push('/login/signup');
     }
 
     const { errorRedirect, sessionId } = await checkoutWithStripe(
@@ -193,7 +194,6 @@ export default function Pricing({ user, products, subscription }: Props) {
               );
             })}
           </div>
-
         </div>
       </section>
     );

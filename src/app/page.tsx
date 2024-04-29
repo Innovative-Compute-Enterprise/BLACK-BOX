@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import React from 'react'
 import { createClient } from '../../utils/supabase/server'
 import Header from '@/components/ui/header/Header';
-import Pricing from '@/components/ui/Pricing/Pricing';
 export default async function PrivatePage() {
   const supabase = createClient();
 
