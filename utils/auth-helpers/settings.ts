@@ -17,7 +17,7 @@ export const getAuthTypes = () => {
 
 export const getViewTypes = () => {
   // Define the valid view types
-  let viewTypes: string[] = [];
+  let viewTypes: string[] = ['welcome'];
   if (allowEmail) {
     viewTypes = [...viewTypes, 'email_signin'];
   }
@@ -36,12 +36,12 @@ export const getViewTypes = () => {
 
 export const getDefaultSignInView = (preferredSignInView: string | null) => {
   // Define the default sign in view
-  let defaultView = allowPassword ? 'password_signin' : 'email_signin';
+  let defaultView = 'welcome';
   if (preferredSignInView && getViewTypes().includes(preferredSignInView)) {
     defaultView = preferredSignInView;
   }
 
-  return defaultView;
+  return 'welcome' ;
 };
 
 export const getRedirectMethod = () => {

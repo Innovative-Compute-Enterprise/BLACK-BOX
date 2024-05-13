@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       return NextResponse.redirect(
         getErrorRedirect(
-          `${requestUrl.origin}/login/forgot-password`,
+          `${requestUrl.origin}/0auth/forgot_password`,
           error.name,
           "Sorry, we weren't able to log you in. Please try again."
         )
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   // URL to redirect to after sign in process completes
   return NextResponse.redirect(
     getStatusRedirect(
-      `${requestUrl.origin}/signin/update-password`,
+      `${requestUrl.origin}/signin/update_password`,
       'You are now signed in.',
       'Please enter a new password for your account.'
     )

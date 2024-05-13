@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { stripe } from '@/utils/stripe/config';
 import { getURL, getErrorRedirect, getStatusRedirect } from '../helpers';
 
 function isValidEmail(email: string) {
@@ -14,6 +15,7 @@ function isValidEmail(email: string) {
 export async function redirectToPath(path: string) {
   return redirect(path);
 }
+
 
 export async function SignOut(formData: FormData) {
   const pathName = String(formData.get('pathName')).trim();
@@ -29,13 +31,13 @@ export async function SignOut(formData: FormData) {
     );
   }
 
-  return '/login';
+  return '/0auth';
 }
 
 
 
 export async function requestPasswordUpdate(formData: FormData) {
-  const callbackURL = getURL('/auth/reset_password');
+  const callbackURL = getURL('/auth/reset-password');
 
   // Get form data
   const email = String(formData.get('email')).trim();
@@ -43,7 +45,7 @@ export async function requestPasswordUpdate(formData: FormData) {
 
   if (!isValidEmail(email)) {
     redirectPath = getErrorRedirect(
-      '/login/forgot_password',
+      '/0auth/forgot_password',
       'Invalid email address.',
       'Please try again.'
     );
@@ -57,20 +59,20 @@ export async function requestPasswordUpdate(formData: FormData) {
 
   if (error) {
     redirectPath = getErrorRedirect(
-      '/login/forgot_password',
+      '/0auth/forgot_password',
       error.message,
       'Please try again.'
     );
   } else if (data) {
     redirectPath = getStatusRedirect(
-      '/login/forgot_password',
+      '/0auth/forgot_password',
       'Success!',
       'Please check your email for a password reset link. You may now close this tab.',
       true
     );
   } else {
     redirectPath = getErrorRedirect(
-      '/login/forgot_password',
+      '/0auth/forgot_password',
       'Hmm... Something went wrong.',
       'Password reset email could not be sent.'
     );
@@ -95,7 +97,7 @@ export async function signInWithPassword(formData: FormData) {
 
   if (error) {
     redirectPath = getErrorRedirect(
-      '/login/password_signin',
+      '/0auth/password_signin',
       'Sign in failed.',
       error.message
     );
@@ -104,7 +106,7 @@ export async function signInWithPassword(formData: FormData) {
     redirectPath = getStatusRedirect('/', 'Success!', 'You are now signed in.');
   } else {
     redirectPath = getErrorRedirect(
-      '/login/password_signin',
+      '/0auth/password_signin',
       'Hmm... Something went wrong.',
       'You could not be signed in.'
     );
@@ -113,7 +115,16 @@ export async function signInWithPassword(formData: FormData) {
   return redirectPath;
 }
 
+async function isEmailInUse(email: string): Promise<boolean> {
+  const supabase = createClient();  // Assuming createClient is defined elsewhere to configure your Supabase client.
+  const { data, error } = await supabase
+    .from('users')  // Assuming 'users' is your table storing user data.
+    .select('email')
+    .eq('email', email)
+    .single();
 
+  return data !== null;  // If data is not null, the email is in use.
+}
 
 export async function signUp(formData: FormData) {
   const callbackURL = getURL('/auth/callback');
@@ -123,13 +134,18 @@ export async function signUp(formData: FormData) {
   
   let redirectPath: string;
 
+  // First, check if the email is valid
   if (!isValidEmail(email)) {
-    redirectPath = getErrorRedirect(
-      '/login/signup',
+    return getErrorRedirect(
+      '/0auth/signup',
       'Invalid email address.',
       'Please try again.'
     );
-    return redirectPath;
+  }
+
+  // Next, check if the email is already in use
+  if (await isEmailInUse(email)) {
+    return getErrorRedirect('/0auth/signup', 'Email already in use.', 'Please use a different email.');
   }
 
   const supabase = createClient();
@@ -141,24 +157,27 @@ export async function signUp(formData: FormData) {
     }
   });
 
-  // Checking for specific error related to email already in use
+  // Check for specific error related to email already in use
   if (error) {
     let errorMessage = 'Sign up failed.';
     if (error.message.toLowerCase().includes('already in use')) {
       errorMessage = 'There is already an account associated with this email address.';
     }
-    redirectPath = getErrorRedirect('/login/signup', errorMessage, error.message);
+    redirectPath = getErrorRedirect('/0auth/signup', errorMessage, error.message);
   } else if (data.session) {
+    // User is immediately signed in
     redirectPath = getStatusRedirect('/', 'Success!', 'You are now signed in.');
   } else if (data.user) {
+    // Email confirmation required, redirect to the auth page
     redirectPath = getStatusRedirect(
-      '/login/signup',
+      '/0auth',
       'Success!',
-      'Please check your email for a confirmation link. You may now close this tab.'
+      'Please check your email for a confirmation link. You may now confirm your email and auth.'
     );
   } else {
+    // General error handling
     redirectPath = getErrorRedirect(
-      '/login/signup',
+      '/0auth/signup',
       'Hmm... Something went wrong.',
       'You could not be signed up.'
     );
@@ -166,6 +185,7 @@ export async function signUp(formData: FormData) {
 
   return redirectPath;
 }
+
 
 
 
@@ -177,7 +197,7 @@ export async function updatePassword(formData: FormData) {
   // Check that the password and confirmation match
   if (password !== passwordConfirm) {
     redirectPath = getErrorRedirect(
-      '/login/update_password',
+      '/0auth/update_password',
       'Your password could not be updated.',
       'Passwords do not match.'
     );
@@ -190,7 +210,7 @@ export async function updatePassword(formData: FormData) {
 
   if (error) {
     redirectPath = getErrorRedirect(
-      '/login/update_password',
+      '/0auth/update_password',
       'Your password could not be updated.',
       error.message
     );
@@ -202,7 +222,7 @@ export async function updatePassword(formData: FormData) {
     );
   } else {
     redirectPath = getErrorRedirect(
-      '/login/update_password',
+      '/0auth/update_password',
       'Hmm... Something went wrong.',
       'Your password could not be updated.'
     );
@@ -284,4 +304,52 @@ export async function updateName(formData: FormData) {
       'Your name could not be updated.'
     );
   }
+}
+
+export async function prepareAccountDeletion(userId: string, stripeCustomerId: string, shouldSoftDelete = false) {
+  
+  const supabase = createClient();
+  try {
+    // Check for active subscriptions
+    const subscriptions = await stripe.subscriptions.list({
+      customer: stripeCustomerId,
+      status: 'active',
+    });
+
+    // If active subscriptions exist, do not allow deletion, suggest cancellation first
+    if (subscriptions.data.length > 0) {
+      return {
+        status: 'pending',
+        message: 'Active subscriptions detected. Please cancel all subscriptions before deleting the account.',
+      };
+    }
+
+    // Perform deletion based on shouldSoftDelete parameter
+    const deletionResponse = shouldSoftDelete ?
+      await supabase.from('auth.users').update({ deleted_at: new Date().toISOString(), enabled: false }).eq('id', userId) :
+      await supabase.auth.admin.deleteUser(userId);
+
+    if (deletionResponse.error) {
+      throw new Error('Failed to delete user account: ' + deletionResponse.error.message);
+    }
+
+    return {
+      status: 'success',
+      message: 'Your account has been ' + (shouldSoftDelete ? 'soft-deleted. You can restore your account within 30 days.' : 'permanently deleted.'),
+    };
+  } catch (error: unknown) { // Properly handle unknown type
+    if (error instanceof Error) {
+      console.error(`Error during account deletion preparation: ${error.message}`);
+      return {
+        status: 'error',
+        message: `An error occurred during account deletion preparation: ${error.message}`
+      };
+    } else {
+      console.error('Error during account deletion preparation: An unknown error occurred.');
+      return {
+        status: 'error',
+        message: 'An unknown error occurred during account deletion preparation.'
+      };
+    }
+  }  
 }

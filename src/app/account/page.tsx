@@ -1,5 +1,6 @@
 import EmailForm from '@/components/ui/account/EmailForm';
 import NameForm from '@/components/ui/account/NameForm';
+import SignOut from '@/components/ui/auth-components/SignOut';
 import CustomerPortalForm from '@/components/ui/account/CustomerPortalForm';
 import Header from '@/components/ui/header/Header';
 import { createClient } from '@/utils/supabase/server';
@@ -41,14 +42,14 @@ const { data: products } = await supabase
 
 
   if (!user) {
-    return redirect('/login');
+    return redirect('/0auth');
   }
 
   return (
     <main>
     <Header />
     <section className='h-auto'>
-      <div className="max-w-5xl pt-12 px-4 mx-auto mb-24 space-y-10">
+     <div className="max-w-3xl pt-10 px-4 mx-auto mb-20 space-y-20">
       <Pricing
             user={user}
             products={products ?? []}
@@ -57,7 +58,8 @@ const { data: products } = await supabase
         <CustomerPortalForm subscription={subscription} />
         <NameForm userName={userDetails?.full_name ?? ''} />
         <EmailForm userEmail={user.email} />
-        </div>
+        <SignOut />
+     </div>
     </section>
     </main>
   );

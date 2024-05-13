@@ -6,7 +6,7 @@ import { requestPasswordUpdate } from '@/utils/auth-helpers/server';
 import { handleRequest } from '@/utils/auth-helpers/client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-// Define prop type with allowEmail boolean
+
 interface ForgotPasswordProps {
   redirectMethod: string;
   disableButton?: boolean;
@@ -41,19 +41,27 @@ export default function ForgotPassword({
         className="mb-4"
         onSubmit={(e) => handleSubmit(e)}
       >
-        <div className="grid gap-2">
+        <div className="grid gap-3">
+
+        <div className='text-center mt-20'>
+            <h1 className='text-3xl font-bold'>Link de recuperaçao via email</h1>
+          </div>
+
           <div className="grid gap-1">
-            <label htmlFor="email">Email</label>
+
+            <div className='my-4'>
             <input
               id="email"
-              placeholder={"name@example.com"}
+              placeholder={"Email da sua conta"}
               type="email"
               name="email"
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect="off"
-              className="w-full p-3 rounded-md bg-zinc-800"
+              className="w-full p-4 rounded-[15px] bg-[#161616] text-white placeholder:text-[#5F5F5F] focus:outline-none"
             />
+            </div>
+
           </div>
           <Button
             variant="slim"
@@ -66,14 +74,16 @@ export default function ForgotPassword({
           </Button>
         </div>
       </form>
-      <p>
-        <Link href="/login/password_signin" className="font-light text-sm">
-          Sign in with email and password
+      <p className='text-center font-base'>
+        Tem uma conta ?{' '}
+        <Link href="/0auth/password_signin" className="font-light my-1 text-blue-600">
+          Login 
         </Link>
       </p>
-      <p>
-        <Link href="/login/signup" className="font-light text-sm">
-          Don&apos;t have an account? Sign up
+      <p className='text-center font-base'>
+      Não tem uma conta?{' '}
+        <Link href="/0auth/signup" className="font-light my-1 text-blue-600">
+           Sign up
         </Link>
       </p>
     </div>

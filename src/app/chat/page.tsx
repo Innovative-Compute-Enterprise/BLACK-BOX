@@ -1,6 +1,6 @@
 import React from 'react'
 import { redirect } from 'next/navigation'
-import { createClient } from '../../../utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import Header from '@/components/ui/header/Header';
 
 export default async function Chat() {
@@ -21,7 +21,7 @@ export default async function Chat() {
           <h1 className='text-3xl font-bold'>Chat</h1>
         </div>
       ) : (
-        redirect('/login')
+        redirect('/0auth')
       )}
     </div>
     </section>

@@ -1,4 +1,3 @@
-// In your SVGs folder, create a file, e.g., BlackBox.tsx
 import React from 'react';
 
 interface BlackBoxProps {

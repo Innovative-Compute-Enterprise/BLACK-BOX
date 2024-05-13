@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       return NextResponse.redirect(
         getErrorRedirect(
-          `${requestUrl.origin}/login`,
+          `${requestUrl.origin}/0auth`,
           error.name,
           "Sorry, we weren't able to log you in. Please try again."
         )

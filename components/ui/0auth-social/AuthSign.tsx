@@ -1,7 +1,8 @@
 'use client'
-import { signInWithOAuth } from '../../../utils/auth-helpers/client'; // Assuming correct import path
+import { signInWithOAuth } from '@/utils/auth-helpers/client'; // Assuming correct import path
 import { useState } from 'react';
-import GitHub from '../../icons/Github';
+import GitHub from '@/components/icons/Github';
+import Google from '@/components/icons/Google'; 
 
 type OAuthProvider = {
   name: string;
@@ -12,9 +13,14 @@ type OAuthProvider = {
 export default function AuthSign() {
   const oAuthProviders: OAuthProvider[] = [
     {
+      name: 'google',
+      displayName: 'Google',
+      icon: <Google className="h-7 w-7" /> 
+    },
+    {
       name: 'github',
       displayName: 'GitHub',
-      icon: <GitHub className="h-5 w-5" /> // Assuming you have the Github icon
+      icon: <GitHub className="h-7 w-7" /> 
     }
     // Add other providers as needed 
   ];
@@ -31,9 +37,9 @@ export default function AuthSign() {
       {oAuthProviders.map((provider) => (
         <form key={provider.name} onSubmit={(e) => handleSubmit(e)}>
         <input type="hidden" name="provider" value={provider.name} />
-          <button className=' w-full justify-center flex gap-2 border hover:bg-gray-500 px-4 py-2 my-4 rounded-md' type="submit">
+          <button className=' w-full justify-center flex gap-2 border hover:bg-white px-4 py-3 my-4 rounded-[10px] transition-colors duration-200 hover:text-black text-base' type="submit">
             {provider.icon}
-            Sign in with {provider.displayName}
+            Sign up in with {provider.displayName}
           </button> 
         </form>
       ))}

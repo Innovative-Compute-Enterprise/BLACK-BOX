@@ -35,7 +35,7 @@ export default function EmailForm({
         <input
           type="text"
           name="newEmail"
-          className="form-input w-full p-3 rounded-md bg-zinc-800 text-white" // Full width for the input
+          className="form-input w-full p-4 rounded-[15px] bg-[#161616] text-white placeholder:text-[#5F5F5F]"
           defaultValue={userEmail ?? ''}
           placeholder="Your email"
           maxLength={64}
