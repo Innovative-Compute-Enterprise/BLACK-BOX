@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { stripe } from '@/utils/stripe/config';
-import { getURL, getErrorRedirect, getStatusRedirect } from '../helpers';
+import { getURL, getErrorRedirect, getStatusRedirect } from '@/utils/helpers';
 
 function isValidEmail(email: string) {
   var regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -275,36 +275,39 @@ export async function updateEmail(formData: FormData) {
 }
 
 
-
 export async function updateName(formData: FormData) {
-  // Get form data
   const fullName = String(formData.get('fullName')).trim();
-
   const supabase = createClient();
-  const { error, data } = await supabase.auth.updateUser({
+
+  // Get the authenticated user
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    return getErrorRedirect('/account', 'Failed to authenticate user.', userError?.message || 'No user found.');
+  }
+
+  // Update user's full name in auth
+  const { error: updateUserError } = await supabase.auth.updateUser({
     data: { full_name: fullName }
   });
 
-  if (error) {
-    return getErrorRedirect(
-      '/account',
-      'Your name could not be updated.',
-      error.message
-    );
-  } else if (data.user) {
-    return getStatusRedirect(
-      '/account',
-      'Success!',
-      'Your name has been updated.'
-    );
-  } else {
-    return getErrorRedirect(
-      '/account',
-      'Hmm... Something went wrong.',
-      'Your name could not be updated.'
-    );
+  if (updateUserError) {
+    return getErrorRedirect('/account', 'Your name could not be updated in auth.', updateUserError.message);
   }
+
+  // Update user's full name in the users table
+  const { error: updateTableError } = await supabase
+    .from('users')
+    .update({ full_name: fullName })
+    .eq('id', userData.user.id);
+
+  if (updateTableError) {
+    return getErrorRedirect('/account', 'Your name could not be updated in the database.', updateTableError.message);
+  }
+
+  return getStatusRedirect('/account', 'Success!', 'Your name has been updated.');
 }
+
+
 
 export async function prepareAccountDeletion(userId: string, stripeCustomerId: string, shouldSoftDelete = false) {
   

@@ -50,7 +50,7 @@ export default function CustomerPortalForm({ subscription }: Props) {
       description={
         subscription
           ? ` ${subscription?.prices?.products?.name} `
-          : 'You are not currently subscribed to any plan.'
+          : 'Free tier'
       }
       footer={
         <div className="flex flex-col items-start justify-between sm:flex-row sm:items-center">

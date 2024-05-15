@@ -51,7 +51,7 @@ export default function Pricing({ user, products, subscription }: Props) {
 
     if (!user) {
       setPriceIdLoading(undefined);
-      return router.push('/login/signup');
+      return router.push('/0auth/signup');
     }
 
     const { errorRedirect, sessionId } = await checkoutWithStripe(
@@ -106,12 +106,12 @@ export default function Pricing({ user, products, subscription }: Props) {
       <section className="bg-black">
         <div className="max-w-3xl px-4 py-6 mx-auto sm:pt-20 sm:pb-8 sm:px-6 lg:px-8">
           <div className="sm:flex sm:flex-col sm:align-center mt-12 md:mt-0">
-            <h1 className="text-5xl font-extrabold text-white sm:text-center">
-              Account
+            <h1 className="text-5xl font-bold text-white sm:text-center">
+              Conta e Planos
             </h1>
             
-            <p className="max-w-2xl m-auto mt-5 text-xl text-zinc-200 sm:text-center sm:text-2xl font-medium">
-             Paid plans unlock additional features.
+            <p className="max-w-2xl m-auto mt-5 text-lg text-zinc-200 sm:text-center font-normal">
+              Desbloquei planos premium para obter acesso a recursos exclusivos, pagamento seguro através do Stripe.
             </p>
 
             <div className="relative self-center mt-6 bg-zinc-900 rounded-lg p-0.5 flex sm:mt-8 border border-zinc-800">
@@ -125,7 +125,7 @@ export default function Pricing({ user, products, subscription }: Props) {
                       : 'ml-0.5 relative w-1/2 border border-transparent text-zinc-400'
                   } rounded-md m-1 py-2 text-sm font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:z-10 sm:w-auto sm:px-8`}
                 >
-                  Monthly billing
+                 Mensal
                 </button>
               )}
               {intervals.includes('year') && (
@@ -138,7 +138,7 @@ export default function Pricing({ user, products, subscription }: Props) {
                       : 'ml-0.5 relative w-1/2 border border-transparent text-zinc-400'
                   } rounded-md m-1 py-2 text-sm font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:z-10 sm:w-auto sm:px-8`}
                 >
-                  Yearly billing
+                  Anual
                 </button>
               )}
             </div>

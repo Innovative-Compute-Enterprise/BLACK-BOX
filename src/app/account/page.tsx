@@ -49,15 +49,15 @@ const { data: products } = await supabase
     <main>
     <Header />
     <section className='h-auto'>
-     <div className="max-w-3xl pt-10 px-4 mx-auto mb-20 space-y-20">
+     <div className="max-w-3xl pt-16 px-4 mx-auto mb-20 space-y-28">
       <Pricing
             user={user}
             products={products ?? []}
             subscription={subscription}
           />    
         <CustomerPortalForm subscription={subscription} />
-        <NameForm userName={userDetails?.full_name ?? ''} />
         <EmailForm userEmail={user.email} />
+        <NameForm userName={userDetails?.full_name ?? ''} />
         <SignOut />
      </div>
     </section>

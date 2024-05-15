@@ -23,15 +23,19 @@ export default function PasswordSignIn({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    setIsSubmitting(true); 
-    if (redirectMethod === 'client') {
-      await handleRequest(e, signInWithPassword, router);
-    } else { // Disable the button while the request is being handled
-    setIsSubmitting(false);
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      if (redirectMethod === 'client') {
+        await handleRequest(e, signInWithPassword, router);
+      }
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+    } finally {
+      setIsSubmitting(false); // Re-enable the button after request is handled
+    }
   };
-}
 
   return (
     <div className='py-44'>

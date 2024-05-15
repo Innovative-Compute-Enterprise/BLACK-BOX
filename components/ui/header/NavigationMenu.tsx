@@ -16,7 +16,7 @@ const NavLinks = () => {
         {navigation.map((item, index) => {
           if (index === 0) { // Only show the Home link in the first column
             return (
-              <Link key={item.name} href={item.href} passHref>
+              <Link key={item.name} href={item.href} passHref prefetch>
                 <span className={`${Roboto.className} py-1 text-white hover:underline text-[15px] mb-2`}>
                   {item.name}
                 </span>
@@ -32,7 +32,7 @@ const NavLinks = () => {
         {navigation.map((item, index) => {
           if (index === 1) { // Only show the Chat link in the second column
             return (
-              <Link key={item.name} href={item.href} passHref>
+              <Link key={item.name} href={item.href} passHref prefetch>
                 <span className={`${Roboto.className} py-1 text-white hover:underline text-[15px] mb-2`}>
                   {item.name} 
                 </span>
@@ -47,7 +47,7 @@ const NavLinks = () => {
         {navigation.map((item, index) => {
           if (index === 2) { // Only show the Account link in the third column
             return (
-              <Link key={item.name} href={item.href} passHref>
+              <Link key={item.name} href={item.href} passHref prefetch>
                 <span className={`${Roboto.className} py-1 text-white hover:underline text-[15px] mb-2`}>
                   {item.name}
                 </span>
