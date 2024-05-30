@@ -65,7 +65,7 @@ export default function CustomerPortalForm({ subscription }: Props) {
         </div>
       }
     >
-      <div className="mt-2 mb-6 text-3xl font-semibold">
+      <div className="mt-2 mb-5 text-4xl font-[900]">
         {subscription ? (
           `${subscriptionPrice}/${subscription?.prices?.interval}`
         ) : (

@@ -11,9 +11,9 @@ export default function Card({ title, description, footer, children }: Props) {
   return (
     <div className="w-full max-w-lg m-auto my-8 border rounded-[15px] border-white/20">
       <div className="p-6">
-        <h3 className="mb-4 text-2xl font-bold">{title}</h3>
+        <h3 className="mb-3 text-2xl font-bold">{title}</h3>
         <div className='my-3'>
-        <p className="text-zinc-300 text-xl">{description}</p>
+        <p className="text-zinc-300 text-2xl">{description}</p>
         {children}
         </div>
       </div>
