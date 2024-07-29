@@ -1,4 +1,6 @@
 'use client';
+'use strict';
+
 
 import Button from '@/components/ui/Button';
 import { updatePassword } from '@/utils/auth-helpers/server';

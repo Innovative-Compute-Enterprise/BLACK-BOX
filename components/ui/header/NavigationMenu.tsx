@@ -1,23 +1,24 @@
 import React from 'react';
 import Link from 'next/link';
 import { Roboto } from "../../../src/app/fonts/font";
+import ThemeSwitcher from '@/components/ui/ThemeSwitcher';
+
 
 const navigation = [
-  { name: 'Home', href: '/' },
-  { name: 'V.0.1', href: '/chat' },
+  { name: 'Chat', href: '/' },
   { name: 'Account', href: '/account' }
 ];
 
 const NavLinks = () => {
   return (
-    <nav className="grid grid-cols-1 md:grid-cols-3 gap-4 p-2 mt-6">
+    <nav className="grid grid-cols-1 md:grid-cols-3 gap-4 p-2 mt-6 bg-transparent">
       <div>
-        <h2 className="text-[15px] text-white my-1 opacity-50">Main</h2>
+        <h2 className="text-[15px] dark:text-white text-black my-1 opacity-50">Main</h2>
         {navigation.map((item, index) => {
           if (index === 0) { // Only show the Home link in the first column
             return (
-              <Link key={item.name} href={item.href} passHref prefetch>
-                <span className={`${Roboto.className} py-1 text-white hover:underline text-[15px] mb-2`}>
+              <Link key={item.name} href={item.href}>
+                <span className={`${Roboto.className} py-1 dark:text-white text-black hover:underline text-[15px] mb-2`}>
                   {item.name}
                 </span>
               </Link>
@@ -28,27 +29,12 @@ const NavLinks = () => {
         {/* More links for column 2 */}
       </div>
       <div>
-        <h2 className="text-[15px] text-white my-1 opacity-50">Chat</h2>
+        <h2 className="text-[15px] dark:text-white text-black my-1 opacity-50">Settings</h2>
         {navigation.map((item, index) => {
-          if (index === 1) { // Only show the Chat link in the second column
+          if (index === 1) { // Only show the Account link in the third column
             return (
-              <Link key={item.name} href={item.href} passHref prefetch>
-                <span className={`${Roboto.className} py-1 text-white hover:underline text-[15px] mb-2`}>
-                  {item.name} 
-                </span>
-              </Link>
-            );
-          }
-          return null;
-        })}
-      </div>
-      <div>
-        <h2 className="text-[15px] text-white my-1 opacity-50">Settings</h2>
-        {navigation.map((item, index) => {
-          if (index === 2) { // Only show the Account link in the third column
-            return (
-              <Link key={item.name} href={item.href} passHref prefetch>
-                <span className={`${Roboto.className} py-1 text-white hover:underline text-[15px] mb-2`}>
+              <Link key={item.name} href={item.href}>
+                <span className={`${Roboto.className} py-1 dark:text-white text-black hover:underline text-[15px] mb-2`}>
                   {item.name}
                 </span>
               </Link>
@@ -58,6 +44,7 @@ const NavLinks = () => {
         })}
         {/* More links for column 3 */}
       </div>
+      <ThemeSwitcher />
     </nav>
   );
 };

@@ -1,4 +1,6 @@
 'use client';
+'use strict';
+
 
 import  EyeClosed from '@/components/icons/EyeClosed';
 import  EyeOpen from '@/components/icons/EyeOpen';

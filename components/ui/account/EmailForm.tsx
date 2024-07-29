@@ -28,19 +28,19 @@ export default function EmailForm({
 
   return (
     <form id="emailForm" onSubmit={handleSubmit} className="flex flex-col items-center mt-8">
-      <div className="w-full max-w-lg px-4 space-y-4">
+      <div className="w-full max-w-lg space-y-4">
         <div className="flex justify-between items-center">
         <h1 className='text-xl font-bold'>Update E-mail</h1>
         </div>
         <input
           type="text"
           name="newEmail"
-          className="form-input w-full p-4 rounded-[15px] bg-[#161616] text-white placeholder:text-[#5F5F5F]"
-          defaultValue={userEmail ?? ''}
-          placeholder="Your email"
+          className="form-input w-full p-4 focus-visible:outline-none rounded-[15px] dark:bg-[#161616] bg-[#E9E9E9] placeholder:text-[#A0A0A0] dark:text-white text-black dark:placeholder:text-[#5F5F5F]"
+          placeholder={userEmail ?? ''}
           maxLength={64}
           disabled={isSubmitting} // Disable the input during submission
         />
+        
          <Button
             variant="slim"
             type="submit"

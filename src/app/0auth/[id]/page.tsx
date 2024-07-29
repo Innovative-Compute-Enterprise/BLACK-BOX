@@ -8,11 +8,11 @@ import {
   getRedirectMethod
 } from '@/utils/auth-helpers/settings';
 import BlackBox from '@/components/icons/BlackBox';
-import ForgotPassword from '@/components/ui/auth-components/ForgotPassword';
-import PasswordLogin from '@/components/ui/auth-components/PasswordLogin';
-import Signup from '@/components/ui/auth-components/Signup';
-import UpdatePassword from '@/components/ui/auth-components/UpdatePassword';
-import Welcome from '@/components/ui/auth-components/Welcome'; // Make sure to import your LandingPage component
+import ForgotPassword from '@/components/ui/Auth-components/ForgotPassword';
+import PasswordLogin from '@/components/ui/Auth-components/PasswordLogin';
+import Signup from '@/components/ui/Auth-components/Signup';
+import UpdatePassword from '@/components/ui/Auth-components/UpdatePassword';
+import Welcome from '@/components/ui/Auth-components/Welcome'; // Make sure to import your LandingPage component
 
 export default async function SignIn({
   params,
@@ -56,7 +56,7 @@ export default async function SignIn({
   return (
     <section>
       <div className="absolute top-16 left-1/2 transform -translate-x-1/2">
-        <BlackBox className='w-[52px] h-[52px]' />
+        <BlackBox className='w-[48px] h-[48px]' />
       </div>
       <div className="flex flex-col justify-center items-center min-h-screen">
         <div className="flex flex-col justify-between m-auto max-w-lg w-[320px]">

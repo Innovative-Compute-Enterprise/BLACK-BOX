@@ -1,11 +1,49 @@
 {
-  "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno"
+  "editor.inlineSuggest.enabled": true,
+  "workbench.iconTheme": "symbols",
+  "editor.accessibilitySupport": "off",
+  "editor.stickyScroll.enabled": true,
+  "liveServer.settings.donotShowInfoMsg": true,
+  "liveServer.settings.donotVerifyTags": true,
+  "remoteHub.commitDirectlyWarning": "off",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "editor.minimap.renderCharacters": false,
+  "github.copilot.enable": {
+      "*": true,
+      "plaintext": true,
+      "markdown": false,
+      "scminput": false
   },
-  "deno.enablePaths": [
-    "supabase/functions"
+  "git.ignoreRebaseWarning": true,
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "editor.fontFamily": "JetBrains Mono",
+  "editor.fontLigatures": true,
+  "terminal.integrated.fontFamily": "monospace",
+  "editor.fontSize": 14,
+  
+  "workbench.startupEditor": "none",
+  "githubPullRequests.createOnPublishBranch": "never",
+  "cSpell.userWords": [
+      "Nuxt",
+      "OPENAI"
   ],
-  "deno.lint": true,
-  "deno.unstable": true,
-  "git.ignoreLimitWarning": true
+  "symbols.hidesExplorerArrows": false,
+  "workbench.colorTheme": "Min Dark",
+  "editor.lineHeight": 1.8,
+  "editor.stickyScroll.maxLineCount": 3,
+  "window.zoomLevel": 1,
+  "explorer.confirmDragAndDrop": false,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "workbench.tips.enabled": false,
+  "workbench.activityBar.location": "hidden",
+  "github.copilot.editor.enableAutoCompletions": true,
+  "launch": {
+      
+      "configurations": [],
+      "compounds": []
+  },
+  "json.schemas": [
+
+  ]
 }

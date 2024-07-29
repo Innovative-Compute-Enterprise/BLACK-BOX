@@ -1,14 +1,13 @@
 'use client';
-import Button from '@/components/ui/Button';
 import type { Tables } from '@/types_db';
 import { getStripe } from '@/utils/stripe/client';
 import { checkoutWithStripe } from '@/utils/stripe/server';
 import { createStripePortal } from '@/utils/stripe/server';
 import { getErrorRedirect } from '@/utils/helpers';
 import { User } from '@supabase/supabase-js';
-import cn from 'classnames';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
+import PricingCard from './PricingCard';
 
 type Subscription = Tables<'subscriptions'>;
 type Product = Tables<'products'>;
@@ -81,15 +80,13 @@ export default function Pricing({ user, products, subscription }: Props) {
     setPriceIdLoading(undefined);
   };
 
-
-  
   const handleManageSubscription = async () => {
     setIsSubmitting(true);
     const redirectUrl = await createStripePortal(currentPath);
     setIsSubmitting(false);
     return router.push(redirectUrl);
   };
-  
+
   if (!products.length) {
     return (
       <section className="bg-black">
@@ -103,29 +100,30 @@ export default function Pricing({ user, products, subscription }: Props) {
     );
   } else {
     return (
-      <section className="bg-black">
-        <div className="max-w-3xl px-4 py-6 mx-auto sm:pt-20 sm:pb-8 sm:px-6 lg:px-8">
-          <div className="sm:flex sm:flex-col sm:align-center mt-12 md:mt-0">
-            <h1 className="text-5xl font-bold text-white sm:text-center">
+      <section>
+        <div className="max-w-3xl py-6 mx-auto sm:pt-20 sm:pb-8">
+          <div className="sm:flex sm:flex-col sm:align-center justify-center 
+                place-content-center mt-16 sm:mt-14 md:mt-10">
+            <h1 className="text-4xl sm:text-4xl md:text-5xl font-extrabold text-black dark:text-white sm:text-center">
               Conta e Planos
             </h1>
-            
-            <p className="max-w-2xl m-auto mt-5 text-lg text-zinc-200 sm:text-center font-normal">
+            <p className="max-w-xl m-auto my-6 text-sm sm:text-base text-black dark:text-white 
+                opacity-60 sm:text-center font-normal tracking-wider text-balance">
               Desbloquei planos premium para obter acesso a recursos exclusivos, pagamento seguro através do Stripe.
             </p>
-
-            <div className="relative self-center mt-6 bg-zinc-900 rounded-lg p-0.5 flex sm:mt-8 border border-zinc-800">
+            <div className="relative self-center dark:bg-black bg-white rounded-[12px] 
+                  p-0.5 flex border border-black/20 dark:border-white/20 max-w-xs">
               {intervals.includes('month') && (
                 <button
                   onClick={() => setBillingInterval('month')}
                   type="button"
                   className={`${
                     billingInterval === 'month'
-                      ? 'relative w-1/2 bg-zinc-700 border-zinc-800 shadow-sm text-white'
-                      : 'ml-0.5 relative w-1/2 border border-transparent text-zinc-400'
-                  } rounded-md m-1 py-2 text-sm font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:z-10 sm:w-auto sm:px-8`}
+                      ? 'w-1/2 dark:bg-[#2B2B2B] bg-[#D4D4D4] text-black dark:text-white'
+                      : ' w-1/2 text-zinc-500'
+                  } rounded-md m-1 py-2 whitespace-nowrap sm:w-auto sm:px-8 dark:hover:bg-zinc-800 hover:bg-zinc-200 transition-all text-sm font-medium`}
                 >
-                 Mensal
+                  Mensal
                 </button>
               )}
               {intervals.includes('year') && (
@@ -134,89 +132,39 @@ export default function Pricing({ user, products, subscription }: Props) {
                   type="button"
                   className={`${
                     billingInterval === 'year'
-                      ? 'relative w-1/2 bg-zinc-700 border-zinc-800 shadow-sm text-white'
-                      : 'ml-0.5 relative w-1/2 border border-transparent text-zinc-400'
-                  } rounded-md m-1 py-2 text-sm font-medium whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 focus:z-10 sm:w-auto sm:px-8`}
+                      ? 'w-1/2 dark:bg-[#2B2B2B] bg-[#D4D4D4] text-black dark:text-white'
+                      : 'w-1/2 text-zinc-500'
+                  } rounded-md m-1 py-2 whitespace-nowrap sm:w-auto sm:px-8 dark:hover:bg-zinc-800 hover:bg-zinc-200 transition-all text-sm font-medium`}
                 >
                   Anual
                 </button>
               )}
             </div>
           </div>
-
-
-          <div className="mt-12 space-y-4 sm:mt-16 sm:space-y-0 flex flex-wrap justify-center gap-6 lg:max-w-4xl lg:mx-auto xl:max-w-none xl:mx-0">
-            {products.map((product) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center place-items-center mt-10"> 
+             {products.map((product) => {
               const price = product.prices.find((p) => p.interval === billingInterval);
-
-              // Format the price if found, else set a default message
               const priceString = price
                 ? new Intl.NumberFormat('en-US', {
                     style: 'currency',
                     currency: price.currency!,
-                    minimumFractionDigits: 0
+                    minimumFractionDigits: 0,
                   }).format((price.unit_amount || 0) / 100)
                 : 'Contact us for pricing';
-
               return (
-                <div
-                key={product.id}
-                className={cn(
-                  'flex flex-col rounded-[15px] shadow-sm divide-y divide-zinc-600 bg-zinc-900',
-                  {
-                    'border border-blue-500': subscription
-                      ? product.name === subscription?.prices?.products?.name
-                      : product.name === 'Freelancer'
-                  },
-                  'flex-1', // This makes the flex item grow to fill the space
-                  'basis-1/3', // Assuming you want each card to take up roughly a third of the container's width
-                  'max-w-xs' // Sets a maximum width to the cards to prevent them from getting too large
-                )}
-              >
-                  <div className="p-6">
-                    <h2 className="text-2xl font-semibold leading-6 text-white">
-                      {product.name}
-                    </h2>
-                    <p className="mt-4 text-zinc-300">{product.description}</p>
-                    <p className="mt-8">
-                      <span className="text-5xl font-extrabold white">
-                        {price ? priceString : 'N/A'}
-                      </span>
-                      {price && (
-                        <span className="text-base font-medium text-zinc-100">
-                          /{billingInterval}
-                        </span>
-                      )}
-                    </p>
-                    <Button
-                      variant="slim"
-                      type="button"
-                      loading={priceIdLoading === price?.id}
-                      onClick={() => {
-                        if (price) {
-                          if (subscription && product.name === subscription?.prices?.products?.name) {
-                            handleManageSubscription();
-                          } else {
-                            handleStripeCheckout(price); // Only call if price is defined
-                          }
-                        } else {
-                          console.error("No price found for this billing interval");
-                          // Optionally handle this case visually in UI
-                        }
-                      }}
-                      className="block w-full py-2 mt-8 text-sm font-semibold text-center text-white rounded-md hover:bg-zinc-900"
-                      disabled={!price}
-                    >
-                      {subscription ? (product.name === subscription?.prices?.products?.name ? 'Manage' : 'Update Plan') : 'Subscribe'}
-                    </Button>
+                
+                <PricingCard
+                  key={product.id}
+                  product={product}
+                  price={price}
+                  priceString={priceString}
+                  billingInterval={billingInterval}
+                  priceIdLoading={priceIdLoading}
+                  subscription={subscription}
+                  handleStripeCheckout={handleStripeCheckout}
+                  handleManageSubscription={handleManageSubscription}
+                />
 
-                    {!price && (
-                      <p className="text-sm text-zinc-500 mt-2">
-                        Please contact us for details on this plan.
-                      </p>
-                    )}
-                  </div>
-                </div>
               );
             })}
           </div>

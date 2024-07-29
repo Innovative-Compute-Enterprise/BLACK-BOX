@@ -4,9 +4,7 @@ import cn from 'classnames';
 import React, { forwardRef, useRef, ButtonHTMLAttributes } from 'react';
 import { mergeRefs } from 'react-merge-refs';
 
-import LoadingDots from '../loading-dots/LoadingDots';
-
-import styles from './Button.module.css';
+import LoadingDots from '../Loading-dots/LoadingDots';
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'slim' | 'flat';
@@ -31,14 +29,20 @@ const Button = forwardRef<HTMLButtonElement, Props>((props, buttonRef) => {
   } = props;
   const ref = useRef(null);
   const rootClassName = cn(
-    styles.root,
+    'cursor-pointer shrink-0 rounded-lg font-bold py-3 transition-colors duration-300',
+    'border border-[#27272a] bg-black text-white',
+    'dark:border-[#E4E4E7] dark:bg-white dark:text-black',
     {
-      [styles.slim]: variant === 'slim',
-      [styles.loading]: loading,
-      [styles.disabled]: disabled
+      'hover:text-white hover:bg-[#27272A] dark:hover:text-black dark:hover:bg-[#e2e2e2]': !loading && !disabled,
+      'outline-none ring-2 ring-white ring-opacity-50': rest.onFocus,
+      'bg-zinc-600': active,
+      'bg-zinc-700 text-zinc-500 border-zinc-600 cursor-not-allowed': loading,
+      'text-zinc-400 border-zinc-600 bg-zinc-700 cursor-not-allowed filter grayscale(1)':
+        disabled,
     },
     className
   );
+
   return (
     <Component
       aria-pressed={active}
@@ -48,7 +52,7 @@ const Button = forwardRef<HTMLButtonElement, Props>((props, buttonRef) => {
       disabled={disabled}
       style={{
         width,
-        ...style
+        ...style,
       }}
       {...rest}
     >

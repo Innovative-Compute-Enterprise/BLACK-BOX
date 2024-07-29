@@ -10,7 +10,6 @@ const Logout = ({ ...props }) => {
         strokeWidth={2} // Corrected property name
         strokeLinecap="round" // Corrected property name
         strokeLinejoin="round" // Corrected property name
-        className="icon icon-tabler icons-tabler-outline icon-tabler-logout"
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />

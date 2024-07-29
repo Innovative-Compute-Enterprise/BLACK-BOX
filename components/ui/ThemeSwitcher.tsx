@@ -1,0 +1,23 @@
+// src/components/ThemeSwitcher.tsx
+"use client";
+
+import React from 'react';
+import { useTheme } from '@/src/app/context/ThemeContext';
+import MoonIcon from '../icons/MoonIcon';
+import SunIcon from '../icons/SunIcon';
+
+const ThemeSwitcher = () => {
+    const { theme, toggleTheme } = useTheme();
+
+    return (
+        <button onClick={toggleTheme} className="p-4 ">
+            {theme === 'dark' ? (
+                <SunIcon />
+            ) : (
+                <MoonIcon />
+            )}
+        </button>
+    );
+};
+
+export default ThemeSwitcher;

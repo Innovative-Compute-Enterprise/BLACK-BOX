@@ -1,6 +1,7 @@
 'use client';
 
 import Button from '@/components/ui/Button';
+import Wallet from '@/components/icons/Wallet';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { createStripePortal } from '@/utils/stripe/server';
@@ -53,19 +54,23 @@ export default function CustomerPortalForm({ subscription }: Props) {
           : 'Free tier'
       }
       footer={
-        <div className="flex flex-col items-start justify-between sm:flex-row sm:items-center">
-          <p className="pb-4 sm:pb-0 text-base text-[#CDCDCD]">Gerencia sua assinatura com Stripe</p>
+        <div className=" flex flex-col items-start justify-between sm:flex-row sm:items-center">
+          <p className="pb-4 sm:pb-0 text-base dark:text-[#CDCDCD] text-[#323232]">Gerencia sua assinatura com Stripe</p>
+          <div className="flex items-center">
           <Button
             variant="slim"
+            className='group flex items-center px-2'
             onClick={handleStripePortalRequest}
             loading={isSubmitting}
-          >
-          Assinatura
+            >
+              <Wallet className="group-hover:text-green-500" />
+              Assinatura
           </Button>
+          </div>
         </div>
       }
     >
-      <div className="mt-2 mb-5 text-4xl font-[900]">
+      <div className="mt-2 mb-5 text-3xl font-bold text-zinc-400">
         {subscription ? (
           `${subscriptionPrice}/${subscription?.prices?.interval}`
         ) : (

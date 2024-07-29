@@ -35,7 +35,7 @@ export default function NameForm({ userName }: { userName: string }) {
 
   return (
     <form id="nameForm" onSubmit={handleSubmit} className="flex flex-col items-center mt-8">
-      <div className="w-full max-w-lg px-4 space-y-4">
+      <div className="w-full max-w-lg space-y-4">
         <div className="flex justify-between items-center">
           <h1 className='text-xl font-bold'>{userName ? 'Mudar Nome' : 'Definir Nome'}</h1>
         </div>
@@ -43,9 +43,8 @@ export default function NameForm({ userName }: { userName: string }) {
           id="fullName"
           type="text"
           name="fullName"
-          className="form-input w-full p-4 rounded-[15px] bg-[#161616] text-white placeholder:text-[#5F5F5F]"
-          defaultValue={fullName ?? ''}
-          placeholder="Seu Nome"
+          className="form-input focus-visible:outline-none w-full p-4 rounded-[15px] dark:bg-[#161616] bg-[#E9E9E9] placeholder:text-[#A0A0A0] dark:text-white text-black dark:placeholder:text-[#5F5F5F]"
+          placeholder={fullName ?? ''}
           maxLength={24}
           disabled={isSubmitting}
           onChange={(e) => setFullName(e.target.value)}

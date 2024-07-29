@@ -1,67 +1,55 @@
+// src/app/layout.tsx
 import { Metadata } from 'next';
-import { PropsWithChildren } from 'react';
 import { getURL } from '@/utils/helpers';
 import { Suspense } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from '@/components/ui/Toasts/toaster';
+import { ThemeProvider } from '@/src/app/context/ThemeContext';
 import '@/styles/main.css';
 
-const meta = {
-  title: 'Black Box',
-  description: 'Brought to you with Next and Supabase.',
-  cardImage: '/og.png',
-  robots: 'follow, index',
-  favicon: 'icons/favicon.ico',
-  url: getURL()
+const title = 'Black Box';
+const description = 'AI models and use cases for your all needs';
+
+export const metadata: Metadata = {
+  metadataBase: new URL(getURL()),
+  icons: '/icons/favicon.ico',
+  title: title,
+  description: description,
+  openGraph: {
+    title: title,
+    description: description,
+  },
 };
 
-export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: meta.title,
-    description: meta.description,
-    referrer: 'origin-when-cross-origin',
-    keywords: ['Vercel', 'Supabase', 'Next.js', 'Stripe', 'Subscription'],
-    authors: [{ name: 'ICE', url: 'https://vercel.com/' }],
-    creator: 'ICE',
-    publisher: 'ICE',
-    robots: meta.robots,
-    icons: { icon: meta.favicon },
-    metadataBase: new URL(meta.url),
-    openGraph: {
-      url: meta.url,
-      title: meta.title,
-      description: meta.description,
-      images: [meta.cardImage],
-      type: 'website',
-      siteName: meta.title
-    },
-    twitter: {
-      card: 'summary_large_image',
-      site: '@Vercel',
-      creator: '@Vercel',
-      title: meta.title,
-      description: meta.description,
-      images: [meta.cardImage]
-    }
-  };
-}
-
-export default async function RootLayout({ children }: PropsWithChildren) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-black">
-        <main
-          id="skip"
-          className="min-h-[calc(100dvh-4rem)] md:min-h[calc(100dvh-5rem)]"
-        >
-          {children}
-        </main>
-        <Suspense>
-          <Toaster />
-        </Suspense>
-        <Analytics />
-        <SpeedInsights />
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta charSet="UTF-8" />
+        <meta name="description" content={description} />
+        <meta name="keywords" content="AI, Artificial Intelligence, Solutions, Future, Wealth" />
+        <meta name="author" content="Black Box" />
+        <title>{title}</title>
+      </head>
+      <body className="
+        bg-white
+        text-black
+        dark:bg-black
+        dark:text-white
+        transition
+        duration-700">
+        <ThemeProvider>
+          <main className="min-h-[calc(100dvh-4rem)] md:min-h[calc(100dvh-5rem)]">
+            {children}
+          </main>
+          <Suspense>
+            <Toaster />
+          </Suspense>
+          <Analytics />
+          <SpeedInsights />
+        </ThemeProvider>
       </body>
     </html>
   );
