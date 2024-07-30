@@ -4,7 +4,7 @@ import cn from 'classnames';
 import React, { forwardRef, useRef, ButtonHTMLAttributes } from 'react';
 import { mergeRefs } from 'react-merge-refs';
 
-import LoadingDots from '../Loading-dots/LoadingDots';
+import LoadingDots from '../Loading-dots';
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'slim' | 'flat';
