@@ -68,7 +68,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 export const useTheme = (): ThemeContextProps => {
     const context = useContext(ThemeContext);
     if (!context) {
-        throw new Error('Theme logic error');
+        throw new Error('useTheme must be used within a ThemeProvider');
     }
     return context;
 };

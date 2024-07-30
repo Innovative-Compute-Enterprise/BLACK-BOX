@@ -6,7 +6,7 @@ import { useTheme } from '@/src/app/context/ThemeContext';
 import MoonIcon from '../icons/MoonIcon';
 import SunIcon from '../icons/SunIcon';
 
-const ThemeSwitcher = () => {
+const ThemeSwitcher: React.FC = () => {
     const { theme, toggleTheme } = useTheme();
 
     return (
