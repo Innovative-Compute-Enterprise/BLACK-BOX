@@ -1,5 +1,5 @@
 import EmailForm from '@/components/ui/Account/EmailForm';
-import NameForm from '@/components/ui/Account/NameForm';
+import NameForm from '../../../components/ui/Account/NameForm';
 import SignOut from '@/components/ui/Auth-components/SignOut';
 import CustomerPortalForm from '@/components/ui/Account/CustomerPortalForm';
 import Header from '@/components/ui/Header/Header';
@@ -16,7 +16,7 @@ import {
 export default async function Account() {
   const supabase = createClient();
 
-  // Fetch data concurrently
+  // Fetch data concurrently and add console logs for debugging
   const [user, userDetails, subscription, products] = await Promise.all([
     getUser(supabase),
     getUserDetails(supabase),
@@ -24,7 +24,12 @@ export default async function Account() {
     getProducts(supabase)
   ]);
 
-  // Redirect if no user
+  // Log fetched data to identify issues
+  console.log('User:', user);
+  console.log('UserDetails:', userDetails);
+  console.log('Subscription:', subscription);
+  console.log('Products:', products);
+
   if (!user) {
     return redirect('/0auth');
   }
