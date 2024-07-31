@@ -6,9 +6,6 @@ import { redirect } from 'next/navigation';
 export default async function PrivatePage() {
   const supabase = createClient()
 
-  /// TO BE REMOVED 1/3
-  debugger
-
   const {
     data: { user },
   } = await supabase.auth.getUser()

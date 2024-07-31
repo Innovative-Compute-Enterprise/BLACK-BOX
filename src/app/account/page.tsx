@@ -16,22 +16,12 @@ import {
 export default async function Account() {
   const supabase = createClient();
 
-  /// TO BE REMOVED 2/3
-  debugger
-
- /// fetch that concurrently from supabase queries
   const [user, userDetails, subscription, products] = await Promise.all([
     getUser(supabase),
     getUserDetails(supabase),
     getSubscription(supabase),
     getProducts(supabase)
   ]);
-
-  // Log fetched data to identify issues
-  console.log('User:', user);
-  console.log('UserDetails:', userDetails);
-  console.log('Subscription:', subscription);
-  console.log('Products:', products);
 
   if (!user) {
     return redirect('/0auth');
