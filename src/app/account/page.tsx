@@ -1,5 +1,5 @@
 import EmailForm from '@/components/ui/Account/EmailForm';
-import NameForm from '../../../components/ui/Account/NameForm';
+import NameForm from '@/components/ui/Account/NameForm';
 import SignOut from '@/components/ui/Auth-components/SignOut';
 import CustomerPortalForm from '@/components/ui/Account/CustomerPortalForm';
 import Header from '@/components/ui/Header/Header';
@@ -16,7 +16,10 @@ import {
 export default async function Account() {
   const supabase = createClient();
 
-  // Fetch data concurrently and add console logs for debugging
+  /// TO BE REMOVED 2/3
+  debugger
+
+ /// fetch that concurrently from supabase queries
   const [user, userDetails, subscription, products] = await Promise.all([
     getUser(supabase),
     getUserDetails(supabase),
