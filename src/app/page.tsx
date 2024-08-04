@@ -1,6 +1,6 @@
 import React from 'react'
 import { createClient } from '@/utils/supabase/server'
-import Header from '@/components/ui/Header/Header'
+import Header from '@/components/ui/header/Header'
 import { redirect } from 'next/navigation';
 
 export default async function PrivatePage() {

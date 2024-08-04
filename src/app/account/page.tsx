@@ -2,8 +2,8 @@ import EmailForm from '@/components/ui/account/EmailForm';
 import NameForm from '@/components/ui/account/NameForm';
 import SignOut from '@/components/ui/auth-components/SignOut';
 import CustomerPortalForm from '@/components/ui/account/CustomerPortalForm';
-import Header from '@/components/ui/Header/Header';
-import Pricing from '@/components/ui/Pricing/Pricing';
+import Header from '@/components/ui/header/Header';
+import Pricing from '@/components/ui/pricing/Pricing';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import {
