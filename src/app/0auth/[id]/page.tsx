@@ -8,11 +8,11 @@ import {
   getRedirectMethod
 } from '@/utils/auth-helpers/settings';
 import BlackBox from '@/components/icons/BlackBox';
-import ForgotPassword from '@/components/ui/Auth-components/ForgotPassword';
-import PasswordLogin from '@/components/ui/Auth-components/PasswordLogin';
-import Signup from '@/components/ui/Auth-components/Signup';
-import UpdatePassword from '@/components/ui/Auth-components/UpdatePassword';
-import Welcome from '@/components/ui/Auth-components/Welcome'; // Make sure to import your LandingPage component
+import ForgotPassword from '@/components/ui/auth-components/ForgotPassword';
+import PasswordLogin from '@/components/ui/auth-components/PasswordLogin';
+import Signup from '@/components/ui/auth-components/Signup';
+import UpdatePassword from '@/components/ui/auth-components/UpdatePassword';
+import Welcome from '@/components/ui/auth-components/Welcome'; // Make sure to import your LandingPage component
 
 export default async function SignIn({
   params,

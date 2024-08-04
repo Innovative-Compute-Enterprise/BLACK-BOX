@@ -1,7 +1,7 @@
-import EmailForm from '@/components/ui/Account/EmailForm';
-import NameForm from '@/components/ui/Account/NameForm';
-import SignOut from '@/components/ui/Auth-components/SignOut';
-import CustomerPortalForm from '@/components/ui/Account/CustomerPortalForm';
+import EmailForm from '@/components/ui/account/EmailForm';
+import NameForm from '@/components/ui/account/NameForm';
+import SignOut from '@/components/ui/auth-components/SignOut';
+import CustomerPortalForm from '@/components/ui/account/CustomerPortalForm';
 import Header from '@/components/ui/Header/Header';
 import Pricing from '@/components/ui/Pricing/Pricing';
 import { redirect } from 'next/navigation';
