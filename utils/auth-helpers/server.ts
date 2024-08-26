@@ -1,5 +1,4 @@
 'use server';
-
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -11,11 +10,9 @@ function isValidEmail(email: string) {
   return regex.test(email);
 }
 
-
 export async function redirectToPath(path: string) {
   return redirect(path);
 }
-
 
 export async function SignOut(formData: FormData) {
   const pathName = String(formData.get('pathName')).trim();
@@ -33,8 +30,6 @@ export async function SignOut(formData: FormData) {
 
   return '/0auth';
 }
-
-
 
 export async function requestPasswordUpdate(formData: FormData) {
   const callbackURL = getURL('/auth/reset-password');
@@ -81,8 +76,6 @@ export async function requestPasswordUpdate(formData: FormData) {
   return redirectPath;
 }
 
-
-
 export async function signInWithPassword(formData: FormData) {
   const cookieStore = cookies();
   const email = String(formData.get('email')).trim();
@@ -116,14 +109,13 @@ export async function signInWithPassword(formData: FormData) {
 }
 
 async function isEmailInUse(email: string): Promise<boolean> {
-  const supabase = createClient();  // Assuming createClient is defined elsewhere to configure your Supabase client.
-  const { data, error } = await supabase
-    .from('users')  // Assuming 'users' is your table storing user data.
+  const supabase = createClient();  
+  const { data } = await supabase
+    .from('users')  
     .select('email')
     .eq('email', email)
     .single();
-
-  return data !== null;  // If data is not null, the email is in use.
+  return data !== null;  
 }
 
 export async function signUp(formData: FormData) {
@@ -186,9 +178,6 @@ export async function signUp(formData: FormData) {
   return redirectPath;
 }
 
-
-
-
 export async function updatePassword(formData: FormData) {
   const password = String(formData.get('password')).trim();
   const passwordConfirm = String(formData.get('passwordConfirm')).trim();
@@ -231,13 +220,9 @@ export async function updatePassword(formData: FormData) {
   return redirectPath;
 }
 
-
-
 export async function updateEmail(formData: FormData) {
-  // Get form data
   const newEmail = String(formData.get('newEmail')).trim();
 
-  // Check that the email is valid
   if (!isValidEmail(newEmail)) {
     return getErrorRedirect(
       '/account',
@@ -274,40 +259,34 @@ export async function updateEmail(formData: FormData) {
   }
 }
 
-
-export async function updateName(formData: FormData) {
+export async function updateName(formData: FormData): Promise<string> {
   const fullName = String(formData.get('fullName')).trim();
   const supabase = createClient();
 
-  // Get the authenticated user
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
-    return getErrorRedirect('/account', 'Failed to authenticate user.', userError?.message || 'No user found.');
+    throw new Error('Authentication failed');
   }
 
-  // Update user's full name in auth
   const { error: updateUserError } = await supabase.auth.updateUser({
     data: { full_name: fullName }
   });
 
   if (updateUserError) {
-    return getErrorRedirect('/account', 'Your name could not be updated in auth.', updateUserError.message);
+    throw new Error('Failed to update user data');
   }
 
-  // Update user's full name in the users table
   const { error: updateTableError } = await supabase
     .from('users')
     .update({ full_name: fullName })
     .eq('id', userData.user.id);
 
   if (updateTableError) {
-    return getErrorRedirect('/account', 'Your name could not be updated in the database.', updateTableError.message);
+    throw new Error('Failed to update user in database');
   }
 
-  return getStatusRedirect('/account', 'Success!', 'Your name has been updated.');
+  return fullName; 
 }
-
-
 
 export async function prepareAccountDeletion(userId: string, stripeCustomerId: string, shouldSoftDelete = false) {
   

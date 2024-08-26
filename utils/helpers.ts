@@ -131,3 +131,40 @@ export const getErrorRedirect = (
     disableButton,
     arbitraryParams
   );
+
+   // NEW CODE FOR NON-REDIRECT TOASTS
+  export const getToastPath = (
+    path: string,
+    toastType: 'status' | 'error',
+    toastName: string,
+    toastDescription: string = '',
+    disableButton: boolean = false,
+    arbitraryParams: string = ''
+  ): string => {
+    return getToastRedirect(
+      path,
+      toastType,
+      toastName,  
+      toastDescription,
+      disableButton,
+      arbitraryParams
+    );
+  };
+  
+  export const getStatusToast = (
+    path: string,
+    statusName: string,
+    statusDescription: string = '',
+    disableButton: boolean = false,
+    arbitraryParams: string = ''
+  ): string => 
+    getToastPath(path, 'status', statusName, statusDescription, disableButton, arbitraryParams);
+  
+  export const getErrorToast = (
+    path: string,
+    errorName: string,
+    errorDescription: string = '',
+    disableButton: boolean = false,
+    arbitraryParams: string = ''
+  ): string => 
+    getToastPath(path, 'error', errorName, errorDescription, disableButton, arbitraryParams);

@@ -6,12 +6,15 @@ import type { Tables } from '@/types_db';
 
 type Product = Tables<'products'>;
 type Price = Tables<'prices'>;
+
 interface ProductWithPrices extends Product {
   prices: Price[];
 }
+
 interface PriceWithProduct extends Price {
   products: Product | null;
 }
+
 interface SubscriptionWithProduct {
   prices: PriceWithProduct | null;
 }
@@ -31,7 +34,6 @@ const PricingCard: React.FC<PricingCardProps> = ({
   product,
   price,
   priceString,
-  billingInterval,
   priceIdLoading,
   subscription,
   handleStripeCheckout,
@@ -53,11 +55,9 @@ const PricingCard: React.FC<PricingCardProps> = ({
             : product.name === 'Freelancer',
           }
           )} >
-
           <h2 className="text-2xl font-semibold leading-6 dark:text-white text-black">
             {product.name}
           </h2>
-
           <PlanSVG planName={product.name} />
         </div>
 
@@ -69,7 +69,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
           </span>
         </p>
         <Button
-          type="button"
+          variant='slim'
           loading={priceIdLoading === price?.id}
           onClick={() => {
             if (price) {

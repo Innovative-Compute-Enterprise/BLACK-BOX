@@ -15,10 +15,10 @@ export default function EmailForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setIsSubmitting(true);
-    // Check if the new email is the same as the old email
+
     if (e.currentTarget.newEmail.value === userEmail) {
-      e.preventDefault();
       setIsSubmitting(false);
       return;
     }

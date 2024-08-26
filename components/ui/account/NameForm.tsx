@@ -2,12 +2,10 @@
 
 import Button from '@/components/ui/Button';
 import { updateName } from '@/utils/auth-helpers/server';
-import { handleRequest } from '@/utils/auth-helpers/client';
-import { useRouter } from 'next/navigation';
+import { handleRequestWithoutRedirect } from '@/utils/auth-helpers/client';
 import { useState, useEffect } from 'react';
 
 export default function NameForm({ userName }: { userName: string }) {
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fullName, setFullName] = useState(userName);
 
@@ -18,18 +16,31 @@ export default function NameForm({ userName }: { userName: string }) {
   }, [userName]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
     setIsSubmitting(true);
-
+  
     if (fullName.trim() === userName) {
       setIsSubmitting(false);
-      return;
+      return handleRequestWithoutRedirect(
+        e,
+        async () => {
+          throw new Error('O nome é igual ao atual');
+        }
+      );
     }
-
+    
     const formData = new FormData(e.currentTarget);
     formData.set('fullName', fullName.trim());
+    
 
-    await handleRequest(e, () => updateName(formData), router);
+    await handleRequestWithoutRedirect(
+      e,
+      () => updateName(formData),
+      {
+        successMessage: 'Nome atualizado com sucesso',
+        errorMessage: 'Erro ao atualizar o nome',
+      }
+    );
+  
     setIsSubmitting(false);
   };
 
@@ -43,7 +54,7 @@ export default function NameForm({ userName }: { userName: string }) {
           id="fullName"
           type="text"
           name="fullName"
-          className="form-input focus-visible:outline-none w-full p-4 rounded-[15px] dark:bg-[#161616] bg-[#E9E9E9] placeholder:text-[#A0A0A0] dark:text-white text-black dark:placeholder:text-[#5F5F5F]"
+          className=" autofill:bg-transparent form-input focus-visible:outline-none w-full p-4 rounded-[15px] dark:bg-[#161616] bg-[#E9E9E9] placeholder:text-[#A0A0A0] dark:text-white text-black dark:placeholder:text-[#5F5F5F]"
           placeholder={fullName ?? ''}
           maxLength={24}
           disabled={isSubmitting}

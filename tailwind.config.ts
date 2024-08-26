@@ -15,6 +15,16 @@ const config: Config = {
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
+      animation: {
+        'spin': 'spin 1s linear infinite',
+        'scale-in': 'scaleIn 0.2s ease-out',
+      },
+      keyframes: {
+        scaleIn: {
+          '0%': { transform: 'scale(0)' },
+          '100%': { transform: 'scale(1)' },
+        },
+      },
     },
   },
   plugins: [],

@@ -4,7 +4,7 @@ import cn from 'classnames';
 import React, { forwardRef, useRef, ButtonHTMLAttributes } from 'react';
 import { mergeRefs } from 'react-merge-refs';
 
-import LoadingDots from '../loading-dots/LoadingDots';
+import LoadingSpinner from '../loading-dots/LoadingSpinner';
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'slim' | 'flat';
@@ -29,7 +29,7 @@ const Button = forwardRef<HTMLButtonElement, Props>((props, buttonRef) => {
   } = props;
   const ref = useRef(null);
   const rootClassName = cn(
-    'cursor-pointer shrink-0 rounded-lg font-bold py-3 transition-colors duration-300',
+    'cursor-pointer shrink-0 rounded-lg font-bold py-3 transition-colors duration-300 relative',
     'border border-[#27272a] bg-black text-white',
     'dark:border-[#E4E4E7] dark:bg-white dark:text-black',
     {
@@ -49,18 +49,23 @@ const Button = forwardRef<HTMLButtonElement, Props>((props, buttonRef) => {
       data-variant={variant}
       ref={mergeRefs([ref, buttonRef])}
       className={rootClassName}
-      disabled={disabled}
+      disabled={disabled || loading}
       style={{
         width,
         ...style,
       }}
       {...rest}
     >
-      {children}
+      <span className={cn('transition-opacity duration-300', {
+        'opacity-0': loading,
+        'opacity-100': !loading,
+      })}>
+        {children}
+      </span>
       {loading && (
-        <i className="flex pl-2 m-0">
-          <LoadingDots />
-        </i>
+        <span className="absolute inset-0 flex items-center justify-center">
+          <LoadingSpinner isLoading={loading} size={20} />
+        </span>
       )}
     </Component>
   );

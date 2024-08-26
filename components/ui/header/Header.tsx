@@ -7,13 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   const plusVariants = {
     expanded: { rotate: 45 },
     collapsed: { rotate: 0 }
   };
 
-  // Variants for the navigation menu animation
   const menuVariants = {
     hidden: {
       opacity: 0,
@@ -34,9 +33,9 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed items-center flex flex-col flex-nowrap justify-start w-full pt-2.5 px-2.5 pb-0 z-50 gap-5 ">
+    <header className="fixed top-0 left-1/2 transform -translate-x-1/2 flex flex-col items-center pt-2.5 px-2.5 pb-0 z-10 w-full">
       <div 
-        className='flex flex-col justify-between w-full p-2.5 cursor-pointer max-w-[600px] dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border rounded-[20px] backdrop-blur-lg' 
+        className='flex flex-col justify-between w-full max-w-[600px] p-2 cursor-pointer dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border rounded-[20px] backdrop-blur-lg' 
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className='flex justify-between items-center w-full'>

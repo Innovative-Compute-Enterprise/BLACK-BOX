@@ -1,6 +1,7 @@
 import React from 'react'
 import { createClient } from '@/utils/supabase/server'
 import Header from '@/components/ui/header/Header'
+import Chat from '@/components/chat/Chat'
 import { redirect } from 'next/navigation';
 
 export default async function PrivatePage() {
@@ -18,7 +19,8 @@ export default async function PrivatePage() {
     <main className="antialiased">
       <Header />
       <section className="flex justify-center items-center min-h-screen">
-        <div className="max-w-[1440px] w-full">
+        <div className="w-full">
+         <Chat />
         </div>
       </section>
     </main>

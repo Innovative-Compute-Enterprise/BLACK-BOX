@@ -8,6 +8,7 @@ import { createStripePortal } from '@/utils/stripe/server';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import { Tables } from '@/types_db';
+import { time } from 'console';
 
 type Subscription = Tables<'subscriptions'>;
 type Price = Tables<'prices'>;
@@ -54,20 +55,22 @@ export default function CustomerPortalForm({ subscription }: Props) {
           : 'Free tier'
       }
       footer={
-        <div className=" flex flex-col items-start justify-between sm:flex-row sm:items-center">
-          <p className="pb-4 sm:pb-0 text-base dark:text-[#CDCDCD] text-[#323232]">Gerencia sua assinatura com Stripe</p>
-          <div className="flex items-center">
-          <Button
-            variant="slim"
-            className='group flex items-center px-2'
-            onClick={handleStripePortalRequest}
-            loading={isSubmitting}
-            >
-              <Wallet className="group-hover:text-green-500" />
-              Assinatura
-          </Button>
-          </div>
-        </div>
+      <div className="flex flex-col items-start justify-between sm:flex-row sm:items-center">
+        <p className="pb-4 sm:pb-0 text-base dark:text-[#CDCDCD] text-[#323232]">
+          Gerencia sua assinatura com Stripe
+        </p>
+        <Button
+          variant="slim"
+          className="group relative inline-flex items-center px-2 py-1"
+          onClick={handleStripePortalRequest}
+          loading={isSubmitting}
+        >
+          <span className="absolute left-2 top-1/2 transform -translate-y-1/2">
+            <Wallet className="group-hover:text-green-500 w-6 h-5" />
+          </span>
+          <span className="pl-6">Assinatura</span>
+        </Button>
+      </div>
       }
     >
       <div className="mt-2 mb-5 text-3xl font-bold text-zinc-400">
