@@ -1,105 +1,367 @@
-'use client'
-import React, { useState, useRef, useEffect } from 'react';
+// src/components/chat/Chat.tsx
+
+'use client';
+
+import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
 import MessageDisplay from './MessageDisplay';
 import InputArea from './InputArea';
-import ChatHistory from './ChatHistory';
-import { PanelLeftOpen, X, MessageCirclePlus, Settings } from 'lucide-react';
+import ChatHeader from './subcomponents/buttonTopLeft';
+import ChatHistoryDrawer from './subcomponents/drawerLeft';
+import { ChatContext, ChatProvider } from '@/context/ChatContext';
+import { createClient } from '@/utils/supabase/client';
+import { Message, ChatHistory } from '@/types/chat';
 
-const Chat = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [input, setInput] = useState('');
-  const [model, setModel] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [chatHistory, setChatHistory] = useState([]);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const messagesEndRef = useRef(null);
+const Chat: React.FC = () => {
+  const supabase = createClient();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  // State variables
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  const [inputMessage, setInputMessage] = useState<string>('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  useEffect(scrollToBottom, [messages]);
+  // Context and refs
+  const { model, setModel } = useContext(ChatContext);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = async () => {
-    // ... (keep the existing logic)
-  };
+  // Function to load chat from history
+  const loadChatFromHistory = useCallback((id: string) => {
+    setCurrentSessionId(id);
+  }, []);
 
-  const loadChatFromHistory = (chatId) => {
-    // ... (keep the existing logic)
-  };
+  // Retrieve the authenticated user's ID on component mount
+  useEffect(() => {
+    const getUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('Error fetching user:', error.message);
+      } else {
+        setUserId(data.user?.id || null);
+      }
+    };
 
-  const toggleDrawer = () => setIsDrawerOpen(!isDrawerOpen);
+    getUser();
+
+    // Listen for authentication state changes to update userId accordingly
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUserId(session.user.id);
+      } else {
+        setUserId(null);
+      }
+    });
+
+    // Clean up the subscription on component unmount
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  // Scroll to the bottom of messages when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Function to toggle the chat history drawer
+  const toggleDrawer = useCallback(() => {
+    setIsDrawerOpen((prev) => !prev);
+  }, []);
+
+  // Function to start a new chat session
+  const handleNewChat = useCallback(() => {
+    setMessages([]);
+    setCurrentSessionId(null);
+  }, []);
+
+  // Function to toggle the settings modal
+  const toggleSettings = useCallback(() => {
+    setIsSettingsOpen((prev) => !prev);
+  }, []);
+
+  // Encapsulate fetchChatHistories in useCallback
+  const fetchChatHistories = useCallback(async () => {
+    if (userId) {
+      try {
+        const response = await fetch(`/api/chat-sessions?userId=${userId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const { histories, error } = await response.json();
+
+        if (error) {
+          console.error('Error fetching chat histories:', error);
+          // Optionally, handle the error in the UI
+        } else {
+          setChatHistories(histories);
+          console.log('Fetched chat histories:', histories);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        // Optionally, handle the fetch error in the UI
+      }
+    } else {
+      setChatHistories([]); // Ensure chatHistories is an empty array
+    }
+  }, [userId]);
+
+  // Fetch chat history when the current chat ID changes
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      if (currentSessionId) {
+        try {
+          // Fetch the messages for the current chat session
+          const response = await fetch(`/api/chat?sessionId=${currentSessionId}`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const { messages: fetchedMessages, error } = await response.json();
+
+          if (error) {
+            console.error('Error fetching chat history:', error);
+            // Optionally, handle the error in the UI
+          } else {
+            setMessages(fetchedMessages);
+          }
+        } catch (err) {
+          console.error('Fetch error:', err);
+          // Optionally, handle the fetch error in the UI
+        }
+      } else {
+        setMessages([]);
+      }
+    };
+
+    fetchChatHistory();
+  }, [currentSessionId]);
+
+  // Fetch chat histories when userId changes
+  useEffect(() => {
+    fetchChatHistories();
+  }, [fetchChatHistories]);
+
+  // Function to handle sending a message
+  const handleSendMessage = useCallback(async () => {
+    if (inputMessage.trim()) {
+      if (!userId) {
+        console.error('User is not authenticated');
+        // Optionally, display a user-facing error message here
+        return;
+      } else if (!model) {
+        console.error('Model is not selected');
+        // Optionally, display a user-facing error message here
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      try {
+        // Send the user's message to the server
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: inputMessage,
+            sessionId: currentSessionId,
+            userId: userId,
+            title: 'To-do',
+            model,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Receive the updated session ID and messages from the server
+        const { sessionId, messages: fetchedMessages, error } = await response.json();
+
+        if (error) {
+          console.error('Error:', error);
+          // Optionally, handle the error in the UI
+        } else {
+          const isNewSession = !currentSessionId;
+          if (isNewSession) {
+            setCurrentSessionId(sessionId);
+            // Refetch chat histories to include the new session
+            await fetchChatHistories();
+            console.log('New session created and chat histories refetched.');
+          }
+          setMessages(fetchedMessages);
+          console.log('Messages updated:', fetchedMessages);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        // Optionally, handle the fetch error in the UI
+      } finally {
+        setInputMessage('');
+        setIsSubmitting(false);
+      }
+    }
+  }, [inputMessage, userId, model, currentSessionId, fetchChatHistories]);
+
+  /**
+   * Handler to edit a chat's title.
+   * @param id - The ID of the chat to edit.
+   * @param newTitle - The new title for the chat.
+   */
+  const onEditChat = useCallback(
+    async (id: string, newTitle: string) => {
+      if (!userId) {
+        console.error('User is not authenticated');
+        // Optionally, display a user-facing error message here
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/chat-sessions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
+            title: newTitle,
+            userId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const { chatHistory, error } = await response.json();
+
+        if (error) {
+          console.error('Error updating chat title:', error);
+        } else {
+          setChatHistories((prevHistories) =>
+            prevHistories.map((chat) =>
+              chat.id === id ? { ...chat, title: newTitle } : chat
+            )
+          );
+          console.log('Chat title updated:', chatHistory);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+      }
+    },
+    [userId]
+  );
+
+  /**
+   * Handler to delete a chat.
+   * @param id - The ID of the chat to delete.
+   */
+  const onDeleteChat = useCallback(
+    async (id: string) => {
+      if (!userId) {
+        console.error('User is not authenticated');
+        // Optionally, display a user-facing error message here
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/chat-sessions/${id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const { success, error } = await response.json();
+
+        if (error) {
+          console.error('Error deleting chat:', error);
+        } else if (success) {
+          setChatHistories((prevHistories) =>
+            prevHistories.filter((chat) => chat.id !== id)
+          );
+
+          if (currentSessionId === id) {
+            setCurrentSessionId(null);
+            setMessages([]);
+          }
+          console.log('Chat deleted successfully:', id);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+      }
+    },
+    [userId, currentSessionId]
+  );
+
+  // ... rest of the component
 
   return (
-    <div className="relative h-screen">
-      <div className="flex h-full">
+    <div className="flex flex-col h-screen">
+      {/* Chat header with drawer and settings toggles */}
+      <ChatHeader
+        isDrawerOpen={isDrawerOpen}
+        toggleSettings={toggleSettings}
+        toggleDrawer={toggleDrawer}
+        handleNewChat={handleNewChat}
+        aria-label="Toggle chat history drawer"
+      />
 
-        {/* Drawer with chat history */}
-        <div
-          className={`${isDrawerOpen ? 'w-64' : 'w-0 display-none border-none'
-            } transition-all duration-300 ease-in-out overflow-hidden bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700`}
-        >
-          <ChatHistory
-            chatHistory={chatHistory}
-            loadChatFromHistory={loadChatFromHistory}
-          />
-        </div>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Chat history drawer */}
+        <ChatHistoryDrawer
+          onEditChat={onEditChat}
+          onDeleteChat={onDeleteChat}
+          isDrawerOpen={isDrawerOpen}
+          chatHistories={chatHistories}
+          loadChatFromHistory={loadChatFromHistory}
+          currentSessionId={currentSessionId}
+        />
 
-        {/* Chat window */}
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 overflow-hidden">
-            <div className="h-full flex flex-col">
-              <div className="flex-1 overflow-y-auto p-4">
+        {/* Main chat area */}
+        <div className="flex-1 flex justify-center">
+          <div className="w-full max-w-2xl flex flex-col">
+            <div className="flex-1 overflow-y-auto py-24 px-4 w-full scrollbar-hide">
+              {/* Display messages or a placeholder if there are no messages */}
+              {messages.length > 0 ? (
                 <MessageDisplay messages={messages} />
-                <div ref={messagesEndRef} />
-              </div>
+              ) : (
+                <div className="text-center text-gray-500 mt-10">
+                  No messages yet. Start the conversation!
+                </div>
+              )}
+              {/* Reference to scroll into view */}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input area for new messages */}
+            <div className="mt-auto w-full px-4">
+              <InputArea
+                input={inputMessage}
+                setInput={setInputMessage}
+                handleSendMessage={handleSendMessage}
+                isSubmitting={isSubmitting}
+                model={model}
+                setModel={setModel}
+              />
             </div>
           </div>
-          <div className="p-4">
-            <InputArea
-              input={input}
-              setInput={setInput}
-              handleSendMessage={handleSendMessage}
-              isSubmitting={isSubmitting}
-              model={model}
-              setModel={setModel}
-            />
-          </div>
         </div>
-      </div>
-
-      {/* Buttons in top left */}
-      <div className="absolute left-3 top-3 z-30 flex space-x-2">
-        <button
-          onClick={toggleDrawer}
-          className="text-gray-600 dark:text-gray-300 p-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-          aria-label={isDrawerOpen ? "Close chat history" : "Open chat history"}
-        >
-          {isDrawerOpen ? (
-            <X className="w-6 h-6" />
-          ) : (
-            <PanelLeftOpen className="w-6 h-6" />
-          )}
-        </button>
-
-        <button
-          className="text-gray-600 dark:text-gray-300 p-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-          aria-label="New chat"
-        >
-          <MessageCirclePlus className="w-6 h-6" />
-        </button>
-
-        <button
-          className="text-black dark:text-white p-2 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
-          aria-label="Settings"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-            <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 0 0-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 0 0-2.282.819l-.922 1.597a1.875 1.875 0 0 0 .432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 0 0 0 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 0 0-.432 2.385l.922 1.597a1.875 1.875 0 0 0 2.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 0 0 2.28-.819l.923-1.597a1.875 1.875 0 0 0-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 0 0 0-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 0 0-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 0 0-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 0 0-1.85-1.567h-1.843ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" clip-rule="evenodd" />
-          </svg>
-        </button>
       </div>
     </div>
   );
 };
 
-export default Chat;
+// Wrap Chat component with ChatProvider context
+const ChatWithProvider: React.FC = () => (
+  <ChatProvider>
+    <Chat />
+  </ChatProvider>
+);
+
+export default React.memo(ChatWithProvider);

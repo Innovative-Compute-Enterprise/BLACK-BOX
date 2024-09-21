@@ -12,7 +12,7 @@ import ForgotPassword from '@/components/ui/auth-components/ForgotPassword';
 import PasswordLogin from '@/components/ui/auth-components/PasswordLogin';
 import Signup from '@/components/ui/auth-components/Signup';
 import UpdatePassword from '@/components/ui/auth-components/UpdatePassword';
-import Welcome from '@/components/ui/auth-components/Welcome'; // Make sure to import your LandingPage component
+import Welcome from '@/components/ui/auth-components/Welcome'; 
 
 export default async function SignIn({
   params,
@@ -25,10 +25,8 @@ export default async function SignIn({
   const viewTypes = getViewTypes();
   const redirectMethod = getRedirectMethod();
 
-  // Declare 'viewProp' and initialize with the default value
-  let viewProp: string = getDefaultSignInView(null); // Default view when no ID provided
+  let viewProp: string = getDefaultSignInView(null); 
 
-  // Assign url id to 'viewProp' if it's a valid string and ViewTypes includes it
   if (typeof params.id === 'string' && viewTypes.includes(params.id)) {
     viewProp = params.id;
   } else {
@@ -42,13 +40,10 @@ export default async function SignIn({
     data: { user }
   } = await supabase.auth.getUser();
 
-  // If a user is logged in and trying to access any page other than 'update_password'
   if (user && viewProp !== 'update_password') {
-    // Redirect to home page
       return redirect('/');
   }
 
-  // If not a user and trying to access 'update_password', redirect to login
   if (!user && viewProp === 'update_password') {
     return redirect('/0auth');
   }
@@ -62,7 +57,7 @@ export default async function SignIn({
         <div className="flex flex-col justify-between m-auto max-w-lg w-[320px]">
           <div title={viewProp === 'forgot_password' ? 'Reset Password' : viewProp === 'signup' ? 'Sign Up' : 'Sign In'}>
             {viewProp === 'welcome' && (
-              <Welcome /> // Using the Welcome component
+              <Welcome /> 
             )}
             {viewProp === 'password_signin' && (
               <PasswordLogin

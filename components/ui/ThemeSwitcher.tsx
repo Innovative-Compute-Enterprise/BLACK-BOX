@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { useTheme } from '@/src/app/context/ThemeContext';
+import { useTheme } from '@/context/ThemeContext';
 import MoonIcon from '../icons/MoonIcon';
 import SunIcon from '../icons/SunIcon';
 

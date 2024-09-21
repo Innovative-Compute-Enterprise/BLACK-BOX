@@ -33,9 +33,9 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-1/2 transform -translate-x-1/2 flex flex-col items-center pt-2.5 px-2.5 pb-0 z-10 w-full">
+    <header className="fixed top-0 left-1/2 transform -translate-x-1/2 flex flex-col items-center pt-2 px-2 pb-0 z-10 w-full">
       <div 
-        className='flex flex-col justify-between w-full max-w-[600px] p-2 cursor-pointer dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border rounded-[20px] backdrop-blur-lg' 
+        className='flex flex-col justify-between w-full max-w-[40%] p-2 cursor-pointer dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border rounded-[20px] backdrop-blur-lg' 
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className='flex justify-between items-center w-full'>
