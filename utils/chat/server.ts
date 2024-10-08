@@ -2,6 +2,7 @@
 
 import { Message, ChatHistory } from '@/types/chat';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { getModelHandler } from './models'; 
 import { randomUUID } from 'crypto';
 
 export async function handlePost({
@@ -9,18 +10,18 @@ export async function handlePost({
   sessionId,
   userId,
   model,
-  supabase, 
+  supabase,
 }: {
   content: string;
+  model: string;
   sessionId: string | null;
   userId: string;
-  model: string;
   supabase: SupabaseClient;
 }): Promise<{ sessionId: string; messages: Message[] }> {
+  console.log('Starting handlePost function with input:', { content, sessionId, userId, model });
   try {
     let currentSessionId = sessionId;
 
-    // Create a new chat session if none exists
     if (!currentSessionId) {
       const { data: sessionData, error: sessionError } = await supabase
         .from('chat_sessions')
@@ -28,43 +29,54 @@ export async function handlePost({
         .select()
         .single();
 
-      if (sessionError) throw sessionError;
+      if (sessionError) {
+        console.error('Error creating chat session:', sessionError.message);
+        throw sessionError;
+      }
 
       currentSessionId = sessionData.id;
+      console.log('New chat session created with ID:', currentSessionId);
     }
 
-    // Fetch the latest chat for this session
+    // Fetch the latest chat associated with the session
     const { data: chatData, error: chatFetchError } = await supabase
       .from('chats')
       .select('*')
       .eq('session_id', currentSessionId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle(); // Use maybeSingle to handle zero or one result
 
-    if (chatFetchError && chatFetchError.code !== 'PGRST116') throw chatFetchError;
+    if (chatFetchError) {
+      console.error('Error fetching latest chat:', chatFetchError.message);
+      throw chatFetchError;
+    }
 
     let chatHistory = chatData?.messages || [];
+    let selectedModel = chatData?.model || model;
 
-    // Add the user's message to the chat history
-    chatHistory.push({ id: randomUUID(), role: 'user', content, });
+    console.log('Using model:', selectedModel);
+    chatHistory.push({ id: randomUUID(), role: 'user', content });
 
-    // Mock the assistant's response instead of calling the OpenAI API
-    const assistantMessage = {
-      id: randomUUID(),
-      role: 'assistant',
-      content: `This is a mock response to your message: "${content}"`,
-    };
+    const modelHandler = getModelHandler(selectedModel);
+    if (!modelHandler) {
+      console.error('No handler for model:', selectedModel);
+      throw new Error(`Unsupported model: ${selectedModel}`);
+    }
+
+    const assistantMessage = await modelHandler(chatHistory);
     chatHistory.push(assistantMessage);
 
-    // Update or insert the chat record in the database
     if (chatData) {
       const { error: updateError } = await supabase
         .from('chats')
         .update({ messages: chatHistory, updated_at: new Date().toISOString() })
         .eq('id', chatData.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating chat:', updateError.message);
+        throw updateError;
+      }
     } else {
       const { error: insertError } = await supabase
         .from('chats')
@@ -74,16 +86,20 @@ export async function handlePost({
             user_id: userId,
             session_id: currentSessionId,
             messages: chatHistory,
-            model: model || 'gpt-3.5-turbo',
+            model: selectedModel,
           },
         ]);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error inserting new chat:', insertError.message);
+        throw insertError;
+      }
     }
 
+    console.log('handlePost function completed successfully');
     return { sessionId: currentSessionId, messages: chatHistory };
   } catch (error: any) {
-    console.error('Error in handlePost:', error);
+    console.error('Error in handlePost:', error.message);
     throw error;
   }
 }
@@ -94,7 +110,7 @@ export async function handleGet({
 }: {
   sessionId: string;
   supabase: SupabaseClient;
-}): Promise<{ messages: Message[] }> {
+}): Promise<{ messages: Message[], model: string }> {
   if (!sessionId) {
     throw new Error('sessionId is required');
   }
@@ -102,16 +118,18 @@ export async function handleGet({
   try {
     const { data: chats, error } = await supabase
       .from('chats')
-      .select('messages')
+      .select('messages, model')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true });
+
 
     if (error) throw error;
 
     // Flatten the messages from all chats
     const chatHistory = chats.flatMap((chat: any) => chat.messages);
+    const model = chats[0].model; // Assuming the model is stored with each chat session
 
-    return { messages: chatHistory };
+    return { messages: chatHistory, model: model };
   } catch (error: any) {
     console.error('Error in handleGet:', error);
     throw error;

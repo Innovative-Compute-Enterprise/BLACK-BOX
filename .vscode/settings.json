@@ -32,7 +32,7 @@
   "workbench.colorTheme": "Min Dark",
   "editor.lineHeight": 1.8,
   "editor.stickyScroll.maxLineCount": 3,
-  "window.zoomLevel": 1,
+  "window.zoomLevel": 0,
   "explorer.confirmDragAndDrop": false,
   "javascript.updateImportsOnFileMove.enabled": "always",
   "workbench.tips.enabled": false,

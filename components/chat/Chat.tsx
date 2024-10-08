@@ -1,27 +1,33 @@
-// src/components/chat/Chat.tsx
-
+// components/Chat.tsx
 'use client';
 
 import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
 import MessageDisplay from './MessageDisplay';
 import InputArea from './InputArea';
 import ChatHeader from './subcomponents/buttonTopLeft';
-import ChatHistoryDrawer from './subcomponents/drawerLeft';
+import ChatHistoryDrawer from './subcomponents/drawer/drawerLeft';
 import { ChatContext, ChatProvider } from '@/context/ChatContext';
 import { createClient } from '@/utils/supabase/client';
 import { Message, ChatHistory } from '@/types/chat';
+import { useRouter } from 'next/navigation'; 
+import NoMessages from './subcomponents/noMessages';
 
-const Chat: React.FC = () => {
+interface ChatProps {
+  sessionId?: string;
+}
+
+const Chat: React.FC<ChatProps> = ({ sessionId }) => {
   const supabase = createClient();
+  const router = useRouter();
 
-  // State variables
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  const [isModelLocked, setIsModelLocked] = useState<boolean>(false);
+
   const [inputMessage, setInputMessage] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(sessionId || null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [userId, setUserId] = useState<string | null>(null);
 
   // Context and refs
@@ -29,9 +35,22 @@ const Chat: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Function to load chat from history
-  const loadChatFromHistory = useCallback((id: string) => {
-    setCurrentSessionId(id);
-  }, []);
+  const loadChatFromHistory = useCallback(
+    (id: string) => {
+      setCurrentSessionId(id);
+      router.push(`/chat/${id}`); 
+    },
+    [router]
+  );
+
+  // Lock model selection if the chat session already exists
+  useEffect(() => {
+    if (currentSessionId) {
+      setIsModelLocked(true); // Lock the model if there's an existing session
+    } else {
+      setIsModelLocked(false); // Unlock the model for new chats
+    }
+  }, [currentSessionId]);
 
   // Retrieve the authenticated user's ID on component mount
   useEffect(() => {
@@ -75,12 +94,10 @@ const Chat: React.FC = () => {
   const handleNewChat = useCallback(() => {
     setMessages([]);
     setCurrentSessionId(null);
-  }, []);
-
-  // Function to toggle the settings modal
-  const toggleSettings = useCallback(() => {
-    setIsSettingsOpen((prev) => !prev);
-  }, []);
+    setIsModelLocked(false); // Unlock model selection for new chat
+    setModel('gpt-4o-mini'); // Optionally reset model to default
+    router.push('/chat'); // Navigate to the chat page without a sessionId
+  }, [router, setModel]);
 
   // Encapsulate fetchChatHistories in useCallback
   const fetchChatHistories = useCallback(async () => {
@@ -109,36 +126,49 @@ const Chat: React.FC = () => {
     }
   }, [userId]);
 
-  // Fetch chat history when the current chat ID changes
+  // Fetch chat history when the current chat ID and userId change
   useEffect(() => {
     const fetchChatHistory = async () => {
-      if (currentSessionId) {
+      if (currentSessionId && userId) {
         try {
-          // Fetch the messages for the current chat session
+          // Fetch the messages and model for the current chat session
           const response = await fetch(`/api/chat?sessionId=${currentSessionId}`);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
-          const { messages: fetchedMessages, error } = await response.json();
+          const { messages: fetchedMessages, model: sessionModel, error } = await response.json();
 
           if (error) {
             console.error('Error fetching chat history:', error);
-            // Optionally, handle the error in the UI
           } else {
-            setMessages(fetchedMessages);
+            // Process fetched messages to set displayedContent for historical messages
+            const processedMessages: Message[] = fetchedMessages.map((msg: Message) => ({
+              ...msg,
+              displayedContent: msg.role === 'assistant' ? msg.content : msg.content,
+              pending: false, // Ensure no pending flag for historical messages
+            }));
+
+            setMessages(processedMessages);
+
+            // Update the model in context to the model from the session
+            if (sessionModel) {
+              setModel(sessionModel);
+            }
+
+            setIsModelLocked(true); // Lock the model selector
           }
         } catch (err) {
           console.error('Fetch error:', err);
-          // Optionally, handle the fetch error in the UI
         }
       } else {
         setMessages([]);
+        setIsModelLocked(false); // Unlock the model selector for new chats
       }
     };
 
     fetchChatHistory();
-  }, [currentSessionId]);
+  }, [currentSessionId, userId, setModel]);
 
   // Fetch chat histories when userId changes
   useEffect(() => {
@@ -146,64 +176,95 @@ const Chat: React.FC = () => {
   }, [fetchChatHistories]);
 
   // Function to handle sending a message
-  const handleSendMessage = useCallback(async () => {
-    if (inputMessage.trim()) {
-      if (!userId) {
-        console.error('User is not authenticated');
-        // Optionally, display a user-facing error message here
-        return;
-      } else if (!model) {
-        console.error('Model is not selected');
-        // Optionally, display a user-facing error message here
-        return;
-      }
-
-      setIsSubmitting(true);
-
-      try {
-        // Send the user's message to the server
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            content: inputMessage,
-            sessionId: currentSessionId,
-            userId: userId,
-            title: 'To-do',
-            model,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+  const handleSendMessage = useCallback(
+    async () => {
+      console.log('handleSendMessage called with:', { inputMessage, currentSessionId, userId, model });
+      if (inputMessage.trim()) {
+        if (!userId) {
+          console.error('User is not authenticated');
+          return;
+        } else if (!model) {
+          console.error('Model is not selected');
+          return;
         }
 
-        // Receive the updated session ID and messages from the server
-        const { sessionId, messages: fetchedMessages, error } = await response.json();
+        const userMessage: Message = {
+          id: `user-${Date.now()}`, // Generate a unique ID
+          content: inputMessage,
+          role: 'user',
+          displayedContent: inputMessage, // Display immediately
+        };
 
-        if (error) {
-          console.error('Error:', error);
-          // Optionally, handle the error in the UI
-        } else {
-          const isNewSession = !currentSessionId;
-          if (isNewSession) {
-            setCurrentSessionId(sessionId);
-            // Refetch chat histories to include the new session
-            await fetchChatHistories();
-            console.log('New session created and chat histories refetched.');
+        const loadingMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          content: '', // Will be filled by the AI
+          displayedContent: '', // For typing animation
+          role: 'assistant',
+          pending: true, // Indicates that this message is loading
+        };
+
+        // Optimistically update the messages state
+        setMessages((prevMessages) => [...prevMessages, userMessage, loadingMessage]);
+
+        setIsSubmitting(true);
+        console.log('Sending message to server:', { inputMessage, currentSessionId, userId, model });
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: inputMessage,
+              sessionId: currentSessionId,
+              userId,
+              model: currentSessionId ? undefined : model,
+            }),
+          });
+
+          if (!response.ok) {
+            console.error('HTTP response not OK:', response.status);
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-          setMessages(fetchedMessages);
-          console.log('Messages updated:', fetchedMessages);
+
+          const { sessionId, messages: fetchedMessages, error } = await response.json();
+          console.log('Received from server:', { sessionId, fetchedMessages });
+
+          if (error) {
+            console.error('Error in handleSendMessage:', error);
+          } else {
+            const isNewSession = !currentSessionId;
+            if (isNewSession) {
+              setCurrentSessionId(sessionId);
+              router.push(`/chat/${sessionId}`);
+              await fetchChatHistories();
+            }
+
+            // Process fetched messages for typing animation
+            const processedFetchedMessages: Message[] = fetchedMessages.map((msg: Message) => ({
+              ...msg,
+              displayedContent: msg.role === 'assistant' ? '' : msg.content, // Initialize as empty for AI
+              pending: msg.role === 'assistant' ? false : msg.pending, // Ensure pending is false for fetched messages
+            }));
+
+            setMessages((prevMessages) => {
+              // Remove the last message (loadingMessage)
+              const updatedMessages = prevMessages.slice(0, -1);
+              // Add the fetched messages
+              return [...updatedMessages, ...processedFetchedMessages];
+            });
+          }
+        } catch (err) {
+          console.error('Fetch error in handleSendMessage:', err);
+          // Optionally, handle the error in the UI (e.g., remove loadingMessage or show an error)
+        } finally {
+          setInputMessage('');
+          setIsSubmitting(false);
         }
-      } catch (err) {
-        console.error('Fetch error:', err);
-        // Optionally, handle the fetch error in the UI
-      } finally {
-        setInputMessage('');
-        setIsSubmitting(false);
+      } else {
+        console.log('Input message was empty after trimming.');
       }
-    }
-  }, [inputMessage, userId, model, currentSessionId, fetchChatHistories]);
+    },
+    [inputMessage, userId, model, currentSessionId, fetchChatHistories, router]
+  );
 
   /**
    * Handler to edit a chat's title.
@@ -299,17 +360,15 @@ const Chat: React.FC = () => {
     [userId, currentSessionId]
   );
 
-  // ... rest of the component
-
   return (
     <div className="flex flex-col h-screen">
-      {/* Chat header with drawer and settings toggles */}
       <ChatHeader
+        model={model}
+        setModel={setModel}
         isDrawerOpen={isDrawerOpen}
-        toggleSettings={toggleSettings}
         toggleDrawer={toggleDrawer}
         handleNewChat={handleNewChat}
-        aria-label="Toggle chat history drawer"
+        isModelLocked={isModelLocked}        
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -324,32 +383,25 @@ const Chat: React.FC = () => {
         />
 
         {/* Main chat area */}
-        <div className="flex-1 flex justify-center">
-          <div className="w-full max-w-2xl flex flex-col">
-            <div className="flex-1 overflow-y-auto py-24 px-4 w-full scrollbar-hide">
-              {/* Display messages or a placeholder if there are no messages */}
-              {messages.length > 0 ? (
-                <MessageDisplay messages={messages} />
-              ) : (
-                <div className="text-center text-gray-500 mt-10">
-                  No messages yet. Start the conversation!
-                </div>
-              )}
-              {/* Reference to scroll into view */}
-              <div ref={messagesEndRef} />
-            </div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-hidden">
+            {messages.length > 0 ? (
+              <MessageDisplay messages={messages} />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <NoMessages />
+              </div>
+            )}
+          </div>
 
-            {/* Input area for new messages */}
-            <div className="mt-auto w-full px-4">
-              <InputArea
-                input={inputMessage}
-                setInput={setInputMessage}
-                handleSendMessage={handleSendMessage}
-                isSubmitting={isSubmitting}
-                model={model}
-                setModel={setModel}
-              />
-            </div>
+          {/* Input area for new messages */}
+          <div className="p-4">
+            <InputArea
+              input={inputMessage}
+              setInput={setInputMessage}
+              handleSendMessage={handleSendMessage}
+              isSubmitting={isSubmitting}
+            />
           </div>
         </div>
       </div>
@@ -357,10 +409,13 @@ const Chat: React.FC = () => {
   );
 };
 
-// Wrap Chat component with ChatProvider context
-const ChatWithProvider: React.FC = () => (
+interface ChatWithProviderProps {
+  sessionId?: string;
+}
+
+const ChatWithProvider: React.FC<ChatWithProviderProps> = ({ sessionId }) => (
   <ChatProvider>
-    <Chat />
+    <Chat sessionId={sessionId} />
   </ChatProvider>
 );
 

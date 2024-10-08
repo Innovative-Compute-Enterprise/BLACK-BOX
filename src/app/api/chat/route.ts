@@ -10,12 +10,25 @@ import { createClient } from '@/utils/supabase/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient(); 
+    const supabase = createClient();
 
     const reqBody = await request.json();
     const { content, sessionId, userId, model } = reqBody;
 
-    const result = await handlePost({ content, sessionId, userId, model, supabase });
+    if (!content || !userId) {
+      return NextResponse.json(
+        { error: 'Content and userId are required' },
+        { status: 400 }
+      );
+    }
+
+    const result = await handlePost({
+      content,
+      sessionId,
+      userId,
+      model, 
+      supabase,
+    });
 
     return NextResponse.json(result);
   } catch (error: any) {
@@ -25,7 +38,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Handle GET requests to retrieve messages for a specific session.
+ * Handle GET requests to retrieve messages and model for a specific session.
  * Expects a query parameter: sessionId
  */
 export async function GET(request: NextRequest) {

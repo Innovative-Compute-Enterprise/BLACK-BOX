@@ -1,46 +1,101 @@
-// components/ModelSelector.tsx
+'use client';
 
-import React from 'react';
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { ChevronDown } from 'lucide-react';
-import { Model } from '@/types/chat';
+import React, { useState, useEffect } from 'react';
+import { ChevronDownIcon } from 'lucide-react';
+import { Listbox, ListboxOption, ListboxButton, ListboxOptions } from '@headlessui/react';
+import clsx from 'clsx';
 
-// Define the props interface for the ModelSelector component
 interface ModelSelectorProps {
   model: string;
   setModel: (model: string) => void;
+  isModelLocked: boolean;
 }
 
-const models: Model[] = [
-  { id: 'gpt4', name: 'GPT-4' },
-  { id: 'gemini', name: 'Gemini 1.5 Pro' },
-  { id: 'claude', name: 'Claude 3 Sonnet' }
+const models = [
+  { id: 'gpt-4o-mini', name: 'GPT-4o', description: 'Exepcional para tarefas diarias.' },
+  { id: 'gemini', name: 'Gemini', description: 'Feito para tarefas gigantes.' },
 ];
 
-const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel }) => {
+const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelLocked }) => {
+  const [selectedModel, setSelectedModel] = useState(model);
+
+  useEffect(() => {
+    setSelectedModel(model);
+  }, [model]);
+
+  const handleModelChange = (selectedModelId: string) => {
+    if (!isModelLocked) {
+      setSelectedModel(selectedModelId);
+      setModel(selectedModelId);
+    }
+  };
+
+  const selectedModelInfo = models.find((m) => m.id === selectedModel);
+
   return (
-    <Menu>
-      <MenuButton className="inline-flex justify-center items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 dark:text-gray-200 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500 transition-colors">
-        {model ? models.find((m) => m.id === model)?.name : 'Select Model'}
-        <ChevronDown className="w-4 h-4 ml-2" aria-hidden="true" />
-      </MenuButton>
-      <MenuItems className="absolute left-0 mt-2 w-56 origin-top-left rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-        {models.map((m) => (
-          <MenuItem key={m.id}>
-            {({ active }) => (
-              <button
-                onClick={() => setModel(m.id)}
-                className={`${
-                  active ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'
-                } block w-full text-left px-4 py-2 text-sm`}
-              >
-                {m.name}
-              </button>
-            )}
-          </MenuItem>
-        ))}
-      </MenuItems>
-    </Menu>
+    <div className="relative inline-block text-left w-full">
+      <Listbox
+        value={selectedModel}
+        onChange={handleModelChange}
+        disabled={isModelLocked}
+        as="div"
+        className="relative"
+      >
+        {({ open }) => (
+          <>
+            <ListboxButton
+              className={clsx(
+                'relative w-full rounded-lg py-1 pl-3 pr-10 text-left bg-[#0E0E0E]/15 dark:bg-[#F1F1F1]/15',
+                'text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-1',
+                isModelLocked ? 'bg-gray-100 dark:bg-zinc-900 cursor-not-allowed' : 'cursor-pointer',
+                'flex justify-between items-center'
+              )}
+            >
+              <span className="block px-1 font-extrabold">{selectedModelInfo?.name}</span>
+            </ListboxButton>
+
+            <ListboxOptions
+              className={clsx(
+                'absolute z-10 mt-2 space-y-2 focus:outline-none w-[286px] rounded-xl p-3 dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border backdrop-blur-lg',
+                'max-h-60 overflow-auto focus:outline-none'
+              )}
+            >
+              <div>
+                <div className="text-xs pl-2.5 mt-1 mb-3 font-semibold text-gray-500 dark:text-gray-400">Mais modelos em breve.</div>
+              </div>
+              {models.map((modelOption) => (
+                <ListboxOption
+                  key={modelOption.id}
+                  value={modelOption.id}
+                  className={({ active }) =>
+                    clsx(
+                      'select-none relative py-3 pl-3 pr-6 rounded-lg hover:dark:bg-[#2B2B2B] hover:bg-[#D4D4D4] cursor-pointer',
+                      active ? '' : 'text-black dark:text-white'
+                    )
+                  }
+                >
+                  {({ selected, active }) => (
+                    <div className=''>
+                      <span className={clsx('block truncate text-sm font-semibold', selected ? 'underline' : '')}>
+                        {modelOption.name}
+                      </span>
+                      <span
+                        className={clsx(
+                          'block text-xs text-gray-500 dark:text-gray-400 mt-1',
+                          active ? '' : ''
+                        )}
+                      >
+                        {modelOption.description}
+                      </span>
+                    </div>
+                  )}
+                </ListboxOption>
+              ))}
+            </ListboxOptions>
+          </>
+        )}
+      </Listbox>
+    </div>
   );
 };
 

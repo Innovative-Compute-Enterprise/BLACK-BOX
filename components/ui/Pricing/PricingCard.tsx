@@ -20,6 +20,7 @@ interface SubscriptionWithProduct {
 }
 
 interface PricingCardProps {
+  isSubmitting: boolean;
   product: ProductWithPrices;
   price: Price | undefined;
   priceString: string;
@@ -31,6 +32,7 @@ interface PricingCardProps {
 }
 
 const PricingCard: React.FC<PricingCardProps> = ({
+  isSubmitting,
   product,
   price,
   priceString,
@@ -70,7 +72,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
         </p>
         <Button
           variant='slim'
-          loading={priceIdLoading === price?.id}
+          loading={isSubmitting}
           onClick={() => {
             if (price) {
               if (subscription && product.name === subscription?.prices?.products?.name) {
@@ -81,7 +83,8 @@ const PricingCard: React.FC<PricingCardProps> = ({
             } else {
               console.error("No price found for this billing interval");
             }
-          }}
+          }
+        }
           className="w-full"
           disabled={!price}
         >

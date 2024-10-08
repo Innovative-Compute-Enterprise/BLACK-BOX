@@ -1,25 +1,18 @@
-// context/ChatContext.tsx
-
+// src/context/ChatContext.tsx
 import React, { createContext, useState, ReactNode } from 'react';
-import { ChatContextType } from '@/types/chat';
 
-// Default values for the chat context
-const defaultChatContext: ChatContextType = {
-  model: null,
-  setModel: () => {},
-};
-
-// Creates the chat context
-export const ChatContext = createContext<ChatContextType>(defaultChatContext);
-
-// Defines the properties for the chat provider component
-interface ChatProviderProps {
-  children: ReactNode;
+interface ChatContextProps {
+  model: string;
+  setModel: (model: string) => void;
 }
 
-// ChatProvider component to wrap around components that need access to the chat context
-export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
-  const [model, setModel] = useState<string | null>(null);
+export const ChatContext = createContext<ChatContextProps>({
+  model: 'gpt-4o-mini', // Set a default model
+  setModel: () => {},
+});
+
+export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [model, setModel] = useState<string>('gpt-4o-mini'); // Initialize with default
 
   return (
     <ChatContext.Provider value={{ model, setModel }}>

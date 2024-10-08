@@ -46,10 +46,12 @@ export default function Pricing({ user, products, subscription }: Props) {
   const currentPath = usePathname();
 
   const handleStripeCheckout = async (price: Price) => {
+    setIsSubmitting(true);
     setPriceIdLoading(price.id);
 
     if (!user) {
       setPriceIdLoading(undefined);
+      setIsSubmitting(false);
       return router.push('/0auth/signup');
     }
 
@@ -76,7 +78,7 @@ export default function Pricing({ user, products, subscription }: Props) {
 
     const stripe = await getStripe();
     stripe?.redirectToCheckout({ sessionId });
-
+    setIsSubmitting(true);
     setPriceIdLoading(undefined);
   };
 
@@ -163,6 +165,7 @@ export default function Pricing({ user, products, subscription }: Props) {
                   subscription={subscription}
                   handleStripeCheckout={handleStripeCheckout}
                   handleManageSubscription={handleManageSubscription}
+                  isSubmitting={isSubmitting}
                 />
 
               );

@@ -8,7 +8,6 @@ import { createStripePortal } from '@/utils/stripe/server';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
 import { Tables } from '@/types_db';
-import { time } from 'console';
 
 type Subscription = Tables<'subscriptions'>;
 type Price = Tables<'prices'>;

@@ -3,7 +3,10 @@
 export interface Message {
   id: string;
   content: string;
+  displayedContent?: string; // New field for typing animation
   role: 'user' | 'assistant';
+  pending?: boolean; // New flag to indicate pending messages
+
 }
 
 export interface ChatHistory {
@@ -19,5 +22,5 @@ export interface Model {
 
 export interface ChatContextType {
   model: string | null;
-  setModel: (model: string) => void;
+  setModel: React.Dispatch<React.SetStateAction<string | null>>;
 }

@@ -21,7 +21,7 @@ export default function SignOutButton({ pathName = '/0auth' }) {
     <div
     className="flex justify-center items-center h-auto gap-6">
 
-       <Tooltip content="Sair" closeDelay={300} className='p-1.5 bg-[#2B2B2B]/70 backdrop-blur-xl rounded-md text-white text-sm'>
+       <Tooltip content="Sair" showArrow={true} closeDelay={300} className='p-1.5 bg-[#2B2B2B]/70 backdrop-blur-xl rounded-md text-white text-sm'>
         <form onSubmit={handleSignOut} className='group'>
         <button
           className='w-16 h-16 rounded-full dark:bg-[#0E0E0E] bg-[#F1F1F1] dark:border-[#ffffff]/10 border-black/10 backdrop-blur flex justify-center items-center hover:bg-red-500 dark:hover:bg-red-600 transition-colors duration-200 border'
@@ -34,7 +34,7 @@ export default function SignOutButton({ pathName = '/0auth' }) {
        </Tooltip>
 
 
-      <Tooltip content="Reportar Bug" closeDelay={300} className='p-1.5 bg-[#2B2B2B]/70 backdrop-blur-xl rounded-md text-white text-sm'>
+      <Tooltip content="Reportar Bug" showArrow={true} closeDelay={300} className='p-1.5 bg-[#2B2B2B]/70 backdrop-blur-xl rounded-md text-white text-sm'>
         <button
           className='w-16 h-16 rounded-full dark:bg-[#0E0E0E] bg-[#F1F1F1] dark:border-[#ffffff]/10 border-black/10 backdrop-blur flex justify-center items-center dark:hover:bg-yellow-600 hover:bg-yellow-400 transition-colors duration-200 border' 
           aria-label='Reportar Bug'
