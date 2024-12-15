@@ -48,18 +48,18 @@ export function ChatSearch({
 
   useEffect(() => {
     if (isOpen) {
-      document.addEventListener("keydown", handleKeyDown);
-      document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("mousedown", handleClickOutside);
     } else {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
+        document.removeEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
+        document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
+}, [isOpen, handleKeyDown, handleClickOutside]);
 
   if (!isOpen) {
     return null;
