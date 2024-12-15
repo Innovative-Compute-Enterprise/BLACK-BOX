@@ -1,30 +1,19 @@
 // app/chat/[sessionId]/page.tsx
-
-import Header from '@/components/ui/header/Header';
-import ChatWithProvider from '@/components/chat/Chat'; // Import the default export
-import { createClient } from '@/utils/supabase/server';
+import Chat from '@/components/chat/Chat';
 import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
 
-export default async function ChatSessionPage({ params }) {
-  const { sessionId } = params;
+interface PageProps {
+  params: { sessionId: string }
+}
+
+export default async function ChatSessionPage({ params }: PageProps) {
   const supabase = createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     redirect('/0auth');
   }
 
-  return (
-    <main className="antialiased">
-      <Header />
-      <section className="flex justify-center items-center min-h-screen">
-        <div className="w-full">
-          <ChatWithProvider sessionId={sessionId} />
-        </div>
-      </section>
-    </main>
-  );
+  return <Chat sessionId={params.sessionId} />;
 }

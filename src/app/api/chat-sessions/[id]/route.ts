@@ -3,7 +3,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleChatDelete } from '@/utils/chat/server'; // Adjust the import path as needed
 import { createClient } from '@/utils/supabase/server';
-
 /**
  * Handle DELETE requests to delete a chat session.
  * Expects the sessionId in the URL and userId in the request body.

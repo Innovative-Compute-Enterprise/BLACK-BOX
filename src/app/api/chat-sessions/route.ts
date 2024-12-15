@@ -4,6 +4,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleChatSessionsGet } from '@/utils/chat/server'; 
 import { handleChatEdit } from '@/utils/chat/server'; 
 import { createClient } from '@/utils/supabase/server';
+import { handleSessionId } from '@/utils/chat/server';
+
+/**
+ * Handle POST requests to create a new chat session.
+ * Expects the userId in the request body.
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = createClient();
+    const reqBody = await request.json();
+    const { userId } = reqBody;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'userId is required' },
+        { status: 400 }
+      );
+    }
+    const { sessionId } = await handleSessionId({ userId, supabase });
+
+    return NextResponse.json({ sessionId }, { status: 201 });
+  } catch (error: any) {
+    console.error('Error in POST /api/chat-sessions:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
 
 
 export async function GET(request: NextRequest) {

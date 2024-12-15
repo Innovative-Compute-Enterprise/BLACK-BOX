@@ -1,99 +1,125 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import { VariableSizeList as List } from 'react-window';
+'use client'
+import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import MessageRow from './subcomponents/message/messageRow';
-
-interface Message {
-  id: string;
-  content: string;
-  displayedContent?: string;
-  role: 'user' | 'assistant';
-  pending?: boolean;
-}
+import { Message } from '../../types/chat';
 
 interface MessageDisplayProps {
   messages: Message[];
+  loadingOlderMessages?: boolean;
+  loadOlderMessages?: () => void;
 }
 
-const MessageDisplay: React.FC<MessageDisplayProps> = ({ messages }) => {
-  const listRef = useRef<List>(null);
+// Separate LoadingIndicator component for better organization
+const LoadingIndicator: React.FC = React.memo(() => (
+  <div className="flex items-center justify-center py-4 space-x-2">
+    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+  </div>
+));
+
+LoadingIndicator.displayName = 'LoadingIndicator';
+
+const MessageDisplay: React.FC<MessageDisplayProps> = React.memo(({
+  messages,
+  loadingOlderMessages = false,
+  loadOlderMessages
+}) => {
+  const virtuosoRef = useRef<VirtuosoHandle | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const rowHeights = useRef<{ [key: number]: number }>({});
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const copyTimeoutRef = useRef<NodeJS.Timeout>(); // Use ref for timeout to prevent memory leaks
 
-  const validMessages = useMemo(() => {
-    return Array.isArray(messages) ? messages : [];
-  }, [messages]);
+  const validMessages = useMemo(() => 
+    Array.isArray(messages) ? messages : [], 
+    [messages]
+  );
 
+  // Auto-scroll effect with cleanup
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollToItem(validMessages.length - 1, 'end');
+    if (virtuosoRef.current && validMessages.length > 0 && shouldAutoScroll) {
+      virtuosoRef.current.scrollToIndex({
+        index: validMessages.length - 1,
+        behavior: 'smooth',
+        align: 'end',
+      });
     }
-  }, [validMessages]);
 
-  const getItemSize = (index: number) => {
-    return rowHeights.current[index] || 50;
-  };
-
-  const setRowHeight = (index: number, size: number) => {
-    if (rowHeights.current[index] !== size) {
-      rowHeights.current[index] = size;
-      listRef.current?.resetAfterIndex(index);
-    }
-  };
-
-  const handleCopy = (id: string) => {
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const rowRef = useRef<HTMLDivElement>(null);
-    const message = validMessages[index];
-    const isFirst = index === 0;
-    const isLast = index === validMessages.length - 1;
-
-    useEffect(() => {
-      if (rowRef.current) {
-        setRowHeight(index, rowRef.current.clientHeight);
+    // Cleanup function
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
       }
-    }, [message, index]);
+    };
+  }, [validMessages, shouldAutoScroll]);
 
-    // Apply different styles or classes if the message is first or last
-    const rowClassName = `flex justify-center py-6 ${
-      isFirst ? 'pt-24' : isLast ? 'pb-32' : ''
-    }`;
+  // Handle scroll events
+  const handleScroll = useCallback((atBottom: boolean) => {
+    setShouldAutoScroll(atBottom);
+  }, []);
 
+  // Enhanced copy handler with timeout cleanup
+  const handleCopy = useCallback((id: string) => {
+    // Clear any existing timeout
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current);
+    }
+
+    setCopiedId(id);
+    copyTimeoutRef.current = setTimeout(() => {
+      setCopiedId(null);
+    }, 2000);
+  }, []);
+
+  const rowRenderer = useCallback((index: number) => {
+    const message = validMessages[index];
+    const isLast = index === validMessages.length - 1;
+    
     return (
-      <div style={style}>
-        <div ref={rowRef} className={rowClassName}>
-          <div className="w-full max-w-2xl 2xl:max-w-3xl">
-            <MessageRow
-              message={message}
-              copiedId={copiedId}
-              handleCopy={handleCopy}
-            />
-          </div>
+      <div className="flex justify-center">
+        <div className="w-full max-w-[572px] 2xl:max-w-2xl 3xl:max-w-3xl my-9">
+          <MessageRow
+            message={message}
+            copiedId={copiedId}
+            handleCopy={handleCopy}
+            index={index}
+            isLast={isLast}
+          />
         </div>
       </div>
     );
-  };
+  }, [validMessages, copiedId, handleCopy]);
+
+  // Loading state components
+  const LoadingHeader = useCallback(() => (
+    loadingOlderMessages ? <LoadingIndicator /> : <div style={{ height: '64px' }} />
+  ), [loadingOlderMessages]);
+
+  const Footer = useCallback(() => (
+    <div style={{ height: '72px' }} />
+  ), []);
 
   return (
-    <AutoSizer>
-      {({ height, width }) => (
-        <List
-          height={height}
-          width={width}
-          itemCount={validMessages.length}
-          itemSize={getItemSize}
-          ref={listRef}
-          className="scrollbar-hide"
-        >
-          {Row}
-        </List>
-      )}
-    </AutoSizer>
+    <Virtuoso
+      ref={virtuosoRef}
+      style={{ height: '100%', width: '100%' }}
+      totalCount={validMessages.length}
+      itemContent={rowRenderer}
+      overscan={90}
+      className="scrollbar-hide"
+      initialTopMostItemIndex={validMessages.length - 1}
+      followOutput="smooth"
+      atBottomStateChange={handleScroll}
+      components={{
+        Header: LoadingHeader,
+        Footer: Footer
+      }}
+      startReached={loadOlderMessages}
+    />
   );
-};
+});
+
+MessageDisplay.displayName = 'MessageDisplay';
 
 export default MessageDisplay;

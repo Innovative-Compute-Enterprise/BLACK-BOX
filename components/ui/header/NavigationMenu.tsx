@@ -1,8 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { Roboto } from "../../../src/app/fonts/font";
 import ThemeSwitcher from '@/components/ui/ThemeSwitcher';
-
+import { Roboto } from '@/styles/fonts/font';
 
 const navigation = [
   { name: 'Chat', href: '/' },

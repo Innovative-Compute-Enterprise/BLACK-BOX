@@ -1,25 +1,26 @@
-// src/context/ThemeContext.tsx
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-enum Theme {
+export enum Theme {
     light = 'light',
-    dark = 'dark'
-}
-
-interface ThemeContextProps {
-    theme: Theme;
-    toggleTheme: () => void;
+    dark = 'dark',
+    system = 'system',
 }
 
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
+
+interface ThemeContextProps {
+    theme: Theme;
+    setTheme: (theme: Theme) => void;
+    toggleTheme: () => void;
+}
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const [theme, setTheme] = useState<Theme>(() => {
         if (typeof window !== 'undefined') {
             const savedTheme = localStorage.getItem('theme') as Theme;
-            if (savedTheme) {
+            if (savedTheme && savedTheme !== Theme.system) {
                 return savedTheme;
             }
             const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -29,37 +30,45 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     });
 
     useEffect(() => {
-        const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-            const newTheme = e.matches ? Theme.dark : Theme.light;
-            setTheme(newTheme);
-            document.documentElement.classList.remove(Theme.light, Theme.dark);
-            document.documentElement.classList.add(newTheme);
+        const applyTheme = (currentTheme: Theme) => {
+            if (currentTheme === Theme.system) {
+                const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.classList.remove(Theme.light, Theme.dark);
+                document.documentElement.classList.add(prefersDarkScheme ? Theme.dark : Theme.light);
+            } else {
+                document.documentElement.classList.remove(Theme.light, Theme.dark);
+                document.documentElement.classList.add(currentTheme);
+            }
         };
 
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        mediaQuery.addEventListener('change', handleSystemThemeChange);
+        applyTheme(theme);
 
+        if (theme !== Theme.system) {
+            localStorage.setItem('theme', theme);
+        }
+    }, [theme]);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+            if (theme === Theme.system) {
+                setTheme(e.matches ? Theme.dark : Theme.light);
+            }
+        };
+
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
         return () => {
             mediaQuery.removeEventListener('change', handleSystemThemeChange);
         };
-    }, []);
-
-    useEffect(() => {
-        document.documentElement.classList.remove(Theme.light, Theme.dark);
-        document.documentElement.classList.add(theme);
-        localStorage.setItem('theme', theme);
     }, [theme]);
 
     const toggleTheme = () => {
         const newTheme = theme === Theme.light ? Theme.dark : Theme.light;
         setTheme(newTheme);
-        document.documentElement.classList.remove(theme);
-        document.documentElement.classList.add(newTheme);
-        localStorage.setItem('theme', newTheme);
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
             {children}
         </ThemeContext.Provider>
     );

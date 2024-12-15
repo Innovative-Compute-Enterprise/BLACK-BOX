@@ -39,17 +39,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         dark:bg-black
         dark:text-white
         transition
-        duration-700">
-        <ThemeProvider>
+        duration-300">
           <main className="min-h-[calc(100dvh-4rem)] md:min-h[calc(100dvh-5rem)]">
+          <ThemeProvider>
             {children}
+          </ThemeProvider>
           </main>
           <Suspense>
             <Toaster />
           </Suspense>
           <Analytics />
           <SpeedInsights />
-        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,67 +1,102 @@
-// src/utils/chat/models/gpt4o.ts
-
-import { Message } from '@/types/chat';
+import { Message, MessageContent } from '@/types/chat';
 import axios from 'axios';
-import crypto from 'crypto'; 
+import crypto from 'crypto';
+
+async function getImageDataUrl(imageUrl: string): Promise<string> {
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+    });
+    const contentType = response.headers['content-type'];
+    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
+    return `data:${contentType};base64,${base64Image}`;
+  } catch (error) {
+    console.error('Error fetching image:', error.message);
+    throw new Error('Failed to fetch and convert image to base64.');
+  }
+}
 
 export async function generateResponse(messages: Message[]): Promise<Message> {
-  
+  console.log(messages);
   try {
+    // Prepare the messages in the format expected by the OpenAI API
+    const formattedMessages = await Promise.all(
+      messages.map(async (msg) => {
+        if (Array.isArray(msg.content)) {
+          // Convert image URLs to base64 data URLs
+          const contentItems = await Promise.all(
+            msg.content.map(async (item) => {
+              if (item.type === 'image_url') {
+                const dataUrl = await getImageDataUrl(item.image_url.url);
+                return {
+                  type: 'image_url',
+                  image_url: {
+                    url: dataUrl,
+                  },
+                };
+              } else {
+                return item;
+              }
+            })
+          );
+
+          return {
+            role: msg.role,
+            content: contentItems,
+          };
+        } else {
+          throw new Error('message.content should be an array of MessageContent');
+        }
+      })
+    );
+
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-4o-mini', 
-        messages: messages.map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        })),
-        // temperature: 0.7, // Optional: Adjust as needed
-        // max_tokens: 100, 
-        // top_p: 1, // Optional: Adjust as needed
-        // frequency_penalty: 0, // Optional: Adjust as needed
-        // presence_penalty: 0, // Optional: Adjust as needed
+        model: 'gpt-4o',
+        messages: formattedMessages,
       },
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, // Ensure this env variable is set
-          'OpenAI-Organization': 'org-4fLbQ7YLVgAmao8WCw7BSZmk', // Add if needed
-          'OpenAI-Project': process.env.OPENAI_PROJECT_ID, // Add if using project keys
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Organization: process.env.OPENAI_ORG_ID,
         },
       }
     );
 
-    // Log Request ID for debugging
-    const requestId = response.headers['x-request-id'];
-    console.log(`Request ID: ${requestId}`);
-
-    // Log Rate Limiting Info (Optional)
-    const rateLimitRemainingRequests = response.headers['x-ratelimit-remaining-requests'];
-    const rateLimitRemainingTokens = response.headers['x-ratelimit-remaining-tokens'];
-    console.log(`Rate Limit Remaining Requests: ${rateLimitRemainingRequests}`);
-    console.log(`Rate Limit Remaining Tokens: ${rateLimitRemainingTokens}`);
-
-    // Ensure the response structure matches the expected format
     const assistantContent = response.data.choices[0]?.message?.content;
 
     if (!assistantContent) {
       throw new Error('No content returned from the assistant.');
     }
 
+    // Handle the assistant's response
+    let contentArray: MessageContent[];
+
+    if (Array.isArray(assistantContent)) {
+      contentArray = assistantContent;
+    } else if (typeof assistantContent === 'string') {
+      contentArray = [{ type: 'text', text: assistantContent }];
+    } else {
+      throw new Error('Assistant content is in an unexpected format.');
+    }
+
     return {
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: assistantContent,
+      content: contentArray,
+      displayedContent: contentArray
+        .map((item) => (item.type === 'text' ? item.text : ''))
+        .join('\n'),
+      createdAt: Date.now(),
     };
   } catch (error: any) {
     if (error.response) {
-      console.error('Error in GPT-4o API:', error.response.data);
-      console.error('Request ID:', error.response.headers['x-request-id']);
-      console.error('Rate Limit Remaining Requests:', error.response.headers['x-ratelimit-remaining-requests']);
-      console.error('Rate Limit Remaining Tokens:', error.response.headers['x-ratelimit-remaining-tokens']);
+      console.error('API Error:', error.response.data);
     } else {
-      console.error('Error in GPT-4o API:', error.message);
+      console.error('Error:', error.message);
     }
-    throw new Error('Failed to generate response using GPT-4o.');
+    throw new Error('Failed to generate response using GPT-4.');
   }
 }

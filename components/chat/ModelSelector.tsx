@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ChevronDownIcon } from 'lucide-react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Listbox, ListboxOption, ListboxButton, ListboxOptions } from '@headlessui/react';
+import { useRouter } from 'next/navigation'; // App Router
+import { ChatContext } from '@/context/ChatContext';
 import clsx from 'clsx';
 
 interface ModelSelectorProps {
@@ -12,11 +13,24 @@ interface ModelSelectorProps {
 }
 
 const models = [
-  { id: 'gpt-4o-mini', name: 'GPT-4o', description: 'Exepcional para tarefas diarias.' },
+  // { id: 'gpt-4o-mini', name: 'GPT-4o', description: 'Exepcional para tarefas diarias.' },
   { id: 'gemini', name: 'Gemini', description: 'Feito para tarefas gigantes.' },
+  // { id: 'claude-sonnet-3.5', name: 'Sonnet-3.5', description: 'Exelente para tarefas dificeis' },
 ];
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelLocked }) => {
+  const { model: contextModel } = useContext(ChatContext);
+   const router = useRouter();
+
+  // // Update the URL whenever the model changes
+  // useEffect(() => {
+  //   if (model) {
+  //     const url = new URL(window.location.href);
+  //     url.searchParams.set("model", model);
+  //     router.replace(url.toString());
+  //   }
+  // }, [model, router]);
+  
   const [selectedModel, setSelectedModel] = useState(model);
 
   useEffect(() => {
@@ -33,13 +47,13 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelL
   const selectedModelInfo = models.find((m) => m.id === selectedModel);
 
   return (
-    <div className="relative inline-block text-left w-full">
+    <div className="relative inline-block text-left w-full ml-1">
       <Listbox
         value={selectedModel}
-        onChange={handleModelChange}
+        onChange={handleModelChange} 
         disabled={isModelLocked}
         as="div"
-        className="relative"
+        className="relative text-sm"
       >
         {({ open }) => (
           <>
@@ -56,8 +70,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelL
 
             <ListboxOptions
               className={clsx(
-                'absolute z-10 mt-2 space-y-2 focus:outline-none w-[286px] rounded-xl p-3 dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border backdrop-blur-lg',
-                'max-h-60 overflow-auto focus:outline-none'
+                'absolute mt-2 space-y-2 focus:outline-none w-[293px] rounded-xl p-3 dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border backdrop-blur-lg',
+                'max-h-120 overflow-auto focus:outline-none'
               )}
             >
               <div>
@@ -69,7 +83,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelL
                   value={modelOption.id}
                   className={({ active }) =>
                     clsx(
-                      'select-none relative py-3 pl-3 pr-6 rounded-lg hover:dark:bg-[#2B2B2B] hover:bg-[#D4D4D4] cursor-pointer',
+                      'select-none relative py-3 pl-3 pr-3 rounded-lg hover:dark:bg-[#2B2B2B] hover:bg-[#D4D4D4] cursor-pointer',
                       active ? '' : 'text-black dark:text-white'
                     )
                   }

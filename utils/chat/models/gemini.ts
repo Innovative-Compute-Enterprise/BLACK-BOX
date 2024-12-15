@@ -1,29 +1,52 @@
-// src/utils/chat/models/gemini.ts
-
-import { Message } from '@/types/chat';
+import { Message, MessageContent } from '@/types/chat';
 import crypto from 'crypto';
+import axios from 'axios';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Ensure the API key is retrieved from the environment
-const apiKey = process.env.GEMINI_API_KEY;
-
-if (!apiKey) {
-  throw new Error('GEMINI_API_KEY is not defined in environment variables.');
+// Convert image URLs to base64 data URLs
+async function getImageDataUrl(imageUrl: string): Promise<string> {
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+    });
+    const contentType = response.headers['content-type'];
+    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
+    return `data:${contentType};base64,${base64Image}`;
+  } catch (error) {
+    console.error('Error fetching image:', error.message);
+    throw new Error('Failed to fetch and convert image to base64.');
+  }
 }
 
-/**
- * Generates a response from the Gemini model based on the provided messages.
- * @param messages - An array of Message objects representing the conversation history.
- * @returns A Promise that resolves to a Message object containing the assistant's response.
- */
-export async function generateResponse(messages: Message[]): Promise<Message> {
-  try {
-    // Initialize the GoogleGenerativeAI instance with the API key
-    const genAI = new GoogleGenerativeAI(apiKey);
+// Initialize the API key from environment variables
+const apiKey = process.env.GEMINI_API_KEY;
 
-    // Configure the generative model with system instructions
+// Generate a response using the Google Generative AI SDK
+export async function generateResponse(messages: Message[]): Promise<Message> {
+  // Initialize the GoogleGenerativeAI client
+  const genAI = new GoogleGenerativeAI(apiKey);
+
+  try {
+    // Prepare the user messages for the API request
+    const userMessages = await Promise.all(
+      messages.map(async (msg: Message) => {
+        const parts = await Promise.all(
+          msg.content.map(async (item) => {
+            if (item.type === 'image_url') {
+              const dataUrl = await getImageDataUrl(item.image_url.url);
+              return { text: `Image: ${dataUrl}` };  
+            } else if (item.type === 'text') {
+              return { text: item.text };
+            }
+            throw new Error('Unsupported content type');
+          })
+        );
+        return { role: 'user', parts };  
+      })
+    );
+
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash-exp',
       systemInstruction: {
         parts: [
           {
@@ -34,73 +57,39 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
       },
     });
 
-    // Transform the incoming messages to match the expected format
-    const userMessages = messages.map((msg: Message) => ({
-      role: 'user',
-      parts: [{ text: msg.content }],
-    }));
-
-    // Define generation configuration
+    // Define generation configuration for the model
     const generationConfig = {
-      //temperature: 1,
-      //topP: 0.95,
-      //topK: 64,
-      //maxOutputTokens: 8192,
-      //responseMimeType: 'application/json',
+      // temperature: 0.7,
+      // topP: 0.95,
+      // topK: 64,
+      // maxOutputTokens: 1024,
     };
 
-    // Generate content using the model
+    // Use the GoogleGenerativeAI client to generate content
     const result = await model.generateContent({
       contents: userMessages,
       generationConfig,
     });
 
-    console.log('Gemini API Full Result:', JSON.stringify(result, null, 2));
+    // Handle the generated assistant response
+    const assistantContent = result.response.candidates[0].content.parts[0].text;
 
-    // Handle potential prompt feedback/blocking
-    if (
-      result.response.promptFeedback &&
-      result.response.promptFeedback.blockReason
-    ) {
-      return {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: `Blocked for ${result.response.promptFeedback.blockReason}`,
-      };
+    if (!assistantContent) {
+      throw new Error('No content returned from the assistant.');
     }
 
-    // Extract the response text
-    const responseText = result.response.candidates[0].content.parts[0].text;
+    // Format the response as MessageContent for your app
+    const contentArray: MessageContent[] = [{ type: 'text', text: assistantContent }];
 
-    if (!responseText) {
-      throw new Error('No content returned from the Gemini API.');
-    }
-
-    // Parse the JSON response as per system instruction
-    const assistantMessage: Message = {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: responseText, // Utilizando o texto diretamente
-    };
-    // Return the formatted assistant message
-    return assistantMessage;
-
-  } catch (error: any) {
-    // Detailed error logging
-    if (error.response) {
-      console.error('Gemini API Error:', error.response.data);
-      console.error('Request ID:', error.response.headers['x-request-id']);
-      console.error('Rate Limit Remaining Requests:', error.response.headers['x-ratelimit-remaining-requests']);
-      console.error('Rate Limit Remaining Tokens:', error.response.headers['x-ratelimit-remaining-tokens']);
-    } else {
-      console.error('Gemini API Error:', error.message);
-    }
-
-    // Return an error message as a Message object
     return {
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: 'Failed to generate response using Gemini.',
+      content: contentArray,
+      displayedContent: assistantContent,
+      createdAt: Date.now(),
     };
+  } catch (error: any) {
+    console.error('Error:', error.message);
+    throw new Error('Failed to generate response using Gemini.');
   }
 }

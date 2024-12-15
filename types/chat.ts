@@ -1,13 +1,18 @@
 // types/chat.ts
-
 export interface Message {
   id: string;
-  content: string;
-  displayedContent?: string; // New field for typing animation
-  role: 'user' | 'assistant';
-  pending?: boolean; // New flag to indicate pending messages
-
+  role: 'user' | 'assistant' | 'system';
+  content: MessageContent[];
+  displayedContent: string;
+  pending?: boolean;
+  createdAt: number;
+  files?: File[];  
+  processing?: boolean;  
 }
+
+export type MessageContent = 
+  | { type: 'text', text: string }
+  | { type: 'image_url', image_url: { url: string } };
 
 export interface ChatHistory {
   id: string;

@@ -2,9 +2,33 @@
 
 import { Message, ChatHistory } from '@/types/chat';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { getModelHandler } from './models'; 
+import { getModelHandler } from './models';
+import { generateChatTitle } from './models'; 
 import { randomUUID } from 'crypto';
 
+// create SessionId
+export async function handleSessionId({
+  userId,
+  supabase,
+}: {
+  userId: string;
+  supabase: SupabaseClient;
+}): Promise<{ sessionId: string }> {
+  const { data: sessionData, error: sessionError } = await supabase
+    .from('chat_sessions')
+    .insert([{ user_id: userId }])
+    .select()
+    .single();
+
+  if (sessionError) {
+    console.error('Error creating chat session:', sessionError.message);
+    throw sessionError;
+  }
+
+  console.log('New chat session created with ID:', sessionData.id);
+  return { sessionId: sessionData.id }; // Garante que a criação do sessionId é feita aqui
+}
+// handle User reuqest
 export async function handlePost({
   content,
   sessionId,
@@ -17,75 +41,63 @@ export async function handlePost({
   sessionId: string | null;
   userId: string;
   supabase: SupabaseClient;
-}): Promise<{ sessionId: string; messages: Message[] }> {
+}): Promise<{ sessionId: string; message: Message }> {
   console.log('Starting handlePost function with input:', { content, sessionId, userId, model });
+
+  // Verifica se o sessionId foi passado
+  if (!sessionId) {
+    throw new Error('Session ID is required to post a message.');
+  }
+
   try {
-    let currentSessionId = sessionId;
-
-    if (!currentSessionId) {
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('chat_sessions')
-        .insert([{ user_id: userId }])
-        .select()
-        .single();
-
-      if (sessionError) {
-        console.error('Error creating chat session:', sessionError.message);
-        throw sessionError;
-      }
-
-      currentSessionId = sessionData.id;
-      console.log('New chat session created with ID:', currentSessionId);
-    }
-
-    // Fetch the latest chat associated with the session
+    // Busca o chat mais recente associado à sessão
     const { data: chatData, error: chatFetchError } = await supabase
       .from('chats')
       .select('*')
-      .eq('session_id', currentSessionId)
+      .eq('session_id', sessionId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .maybeSingle(); // Use maybeSingle to handle zero or one result
+      .maybeSingle();
 
     if (chatFetchError) {
       console.error('Error fetching latest chat:', chatFetchError.message);
       throw chatFetchError;
     }
 
-    let chatHistory = chatData?.messages || [];
+    // Inicializa o histórico de mensagens e o modelo
+    let thread = chatData?.messages || [];
     let selectedModel = chatData?.model || model;
 
     console.log('Using model:', selectedModel);
-    chatHistory.push({ id: randomUUID(), role: 'user', content });
 
+    // Adiciona a mensagem do usuário ao histórico
+    thread.push({ id: randomUUID(), role: 'user', content });
+
+    // Obtenha o manipulador para o modelo selecionado
     const modelHandler = getModelHandler(selectedModel);
     if (!modelHandler) {
       console.error('No handler for model:', selectedModel);
       throw new Error(`Unsupported model: ${selectedModel}`);
     }
 
-    const assistantMessage = await modelHandler(chatHistory);
-    chatHistory.push(assistantMessage);
+    // Gere a resposta do assistente
+    const assistantMessage = await modelHandler(thread);
+    thread.push(assistantMessage);
 
-    if (chatData) {
-      const { error: updateError } = await supabase
-        .from('chats')
-        .update({ messages: chatHistory, updated_at: new Date().toISOString() })
-        .eq('id', chatData.id);
+    // Se não houver chatData, significa que esta é a primeira mensagem, então insere um novo chat
+    if (!chatData) {
+      console.log('No previous chat data found, inserting a new chat.');
 
-      if (updateError) {
-        console.error('Error updating chat:', updateError.message);
-        throw updateError;
-      }
-    } else {
+      const generatedTitle = await generateChatTitle(thread);
+
       const { error: insertError } = await supabase
         .from('chats')
         .insert([
           {
-            title: 'To-do',
+            title: generatedTitle,
             user_id: userId,
-            session_id: currentSessionId,
-            messages: chatHistory,
+            session_id: sessionId, 
+            messages: thread,
             model: selectedModel,
           },
         ]);
@@ -94,10 +106,20 @@ export async function handlePost({
         console.error('Error inserting new chat:', insertError.message);
         throw insertError;
       }
+    } else {
+      const { error: updateError } = await supabase
+        .from('chats')
+        .update({ messages: thread, updated_at: new Date().toISOString() })
+        .eq('id', chatData.id);
+
+      if (updateError) {
+        console.error('Error updating chat:', updateError.message);
+        throw updateError;
+      }
     }
 
     console.log('handlePost function completed successfully');
-    return { sessionId: currentSessionId, messages: chatHistory };
+    return { sessionId: sessionId, message: assistantMessage };
   } catch (error: any) {
     console.error('Error in handlePost:', error.message);
     throw error;
@@ -110,7 +132,7 @@ export async function handleGet({
 }: {
   sessionId: string;
   supabase: SupabaseClient;
-}): Promise<{ messages: Message[], model: string }> {
+}): Promise<{ messages: Message[]; model: string | null }> {
   if (!sessionId) {
     throw new Error('sessionId is required');
   }
@@ -122,12 +144,19 @@ export async function handleGet({
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true });
 
+    if (error) {
+      throw error;
+    }
 
-    if (error) throw error;
+    if (!chats || chats.length === 0) {
+      // No chat data found for the provided sessionId
+      // Return empty messages array and model as null
+      return { messages: [], model: null };
+    }
 
     // Flatten the messages from all chats
     const chatHistory = chats.flatMap((chat: any) => chat.messages);
-    const model = chats[0].model; // Assuming the model is stored with each chat session
+    const model = chats[0]?.model || null; // Use null if undefined
 
     return { messages: chatHistory, model: model };
   } catch (error: any) {

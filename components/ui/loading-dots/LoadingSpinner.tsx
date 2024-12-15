@@ -9,7 +9,7 @@ interface LoadingSpinnerProps {
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   isLoading,
   size = 24,
-  color = '#ffffff'
+  color = '#ffffff dark:text-black'
 }) => {
   const [showCheck, setShowCheck] = useState(false);
 
