@@ -7,6 +7,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Message } from '@/types/chat';
+import Image from 'next/image';
 
 interface MessageBubbleProps {
   message: Message;
@@ -64,12 +65,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               return <div key={idx}>{contentItem.text}</div>;
             } else if (contentItem.type === 'image_url') {
               return (
-                <img
+                 <Image
                   key={idx}
                   src={contentItem.image_url.url}
                   alt=""
+                  width={500} // Or any reasonable default or calculated based on your layout.
+                  height={300} // or any reasonable default or calculated based on your layout.
                   className="max-w-full rounded-md"
-                />
+                 />
               );
             }
             return null;
@@ -123,7 +126,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 />
               ),
               img: ({ node, ...props }) => (
-                <img className="max-w-full rounded-md my-2" alt={props.alt} {...props} />
+                 <Image
+                    className="max-w-full rounded-md my-2"
+                    src={props.src}
+                    alt={props.alt || ""} // Ensure alt is provided
+                    width={500} // Or any reasonable default or calculated based on your layout.
+                    height={300} // or any reasonable default or calculated based on your layout.
+                  />
               ),
               code({ node, inline, className, children, ...props }: any) {
                 const match = /language-(\w+)/.exec(className || '');
@@ -174,13 +183,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         );
       } else if (contentItem.type === 'image_url') {
         return (
-          <img
-            key={idx}
-            className="max-w-full rounded-md my-2"
-            src={contentItem.image_url.url}
-            alt=""
-          />
-        );
+           <Image
+             key={idx}
+              className="max-w-full rounded-md my-2"
+              src={contentItem.image_url.url}
+              alt=""
+              width={500} // Or any reasonable default or calculated based on your layout.
+              height={300} // or any reasonable default or calculated based on your layout.
+            />
+         );
       }
       return null;
     });

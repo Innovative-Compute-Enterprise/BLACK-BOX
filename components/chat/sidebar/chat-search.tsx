@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import {
   Command,
   CommandInput,
@@ -34,17 +34,18 @@ export function ChatSearch({
     onClose();
   };
 
-  const handleKeyDown = (event: KeyboardEvent) => {
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === "Escape") {
       onClose();
     }
-  };
+  }, [onClose]);
 
-  const handleClickOutside = (event: MouseEvent) => {
+  const handleClickOutside = useCallback((event: MouseEvent) => {
     if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
       onClose();
     }
-  };
+  }, [modalRef, onClose]);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -60,6 +61,7 @@ export function ChatSearch({
         document.removeEventListener("mousedown", handleClickOutside);
     };
 }, [isOpen, handleKeyDown, handleClickOutside]);
+
 
   if (!isOpen) {
     return null;

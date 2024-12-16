@@ -1,7 +1,7 @@
 import React from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { Clipboard } from 'lucide-react';
-import { Message } from '@/types/chat';
+import { Message, MessageContent } from '@/types/chat';
 
 interface MessageActionsProps {
   message: Message;
@@ -9,13 +9,19 @@ interface MessageActionsProps {
   handleCopy: (id: string) => void;
 }
 
+
+const isTextContent = (content: MessageContent): content is { type: 'text'; text: string } => {
+    return content.type === 'text';
+};
+
 // Função para extrair o texto de uma mensagem
 const getMessageText = (message: Message) => {
-  return message.content
-    .filter(content => content.type === 'text') // Filtra apenas os conteúdos de texto
-    .map(content => content.text) // Extrai o texto de cada conteúdo
-    .join(' '); // Junta todos os textos em uma única string
+    return message.content
+        .filter(isTextContent) // Filtra apenas os conteúdos de texto using a type guard
+        .map(content => content.text) // Now it's safe to access content.text
+        .join(' '); // Junta todos os textos em uma única string
 };
+
 
 const MessageActions: React.FC<MessageActionsProps> = ({ message, copiedId, handleCopy }) => {
   const messageText = getMessageText(message); // Obtenha o texto completo da mensagem
