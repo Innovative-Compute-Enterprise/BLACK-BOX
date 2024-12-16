@@ -1,7 +1,8 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { Message } from '@/types/chat';
 import axios from 'axios';
 import crypto from 'crypto';
-import Anthropic from '@anthropic-ai/sdk';
+import { ImageBlockParam, MessageParam, TextBlockParam } from '@anthropic-ai/sdk/resources';
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
@@ -23,16 +24,16 @@ async function getImageDataUrl(imageUrl: string): Promise<string> {
 
 export async function generateResponse(messages: Message[]): Promise<Message> {
   try {
-    const formattedMessages = await Promise.all(
-      messages.map(async (msg) => {
+    const formattedMessages: MessageParam[] = await Promise.all(
+      messages.map(async (msg): Promise<MessageParam> => {
         if (typeof msg.content === 'string') {
           return {
             role: msg.role,
             content: msg.content,
           };
         } else if (Array.isArray(msg.content)) {
-          const contentItems = await Promise.all(
-            msg.content.map(async (item) => {
+          const contentItems: (TextBlockParam | ImageBlockParam)[] = await Promise.all(
+            msg.content.map(async (item): Promise<TextBlockParam | ImageBlockParam> => {
               if (item.type === 'image_url') {
                 const dataUrl = await getImageDataUrl(item.image_url.url);
                 return {
@@ -44,7 +45,7 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
                   },
                 };
               }
-              return item;
+              return { type: 'text', text: item.text } as TextBlockParam;
             })
           );
           return {
@@ -58,18 +59,21 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
 
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 10, // Increased token limit
+      max_tokens: 1000,
       messages: formattedMessages,
     });
+    
 
-    // Check if response.content exists and has items
     if (!response.content || response.content.length === 0) {
       throw new Error('No content returned from the assistant.');
     }
 
-    // Extract text from response
-    const assistantContent = response.content[0]?.text || '';
-
+    // Extract text content, handling different block types
+    const assistantContent = response.content
+      .filter(block => block.type === 'text')
+      .map(block => block.text)
+      .join('');
+    
     return {
       id: response.id || crypto.randomUUID(),
       role: 'assistant',

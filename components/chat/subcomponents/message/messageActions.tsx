@@ -14,7 +14,6 @@ const isTextContent = (content: MessageContent): content is { type: 'text'; text
     return content.type === 'text';
 };
 
-// Função para extrair o texto de uma mensagem
 const getMessageText = (message: Message) => {
     return message.content
         .filter(isTextContent) // Filtra apenas os conteúdos de texto using a type guard
