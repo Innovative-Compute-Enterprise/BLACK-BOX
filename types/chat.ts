@@ -1,7 +1,7 @@
 // types/chat.ts
 export interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: MessageContent[];
   displayedContent: string;
   pending?: boolean;

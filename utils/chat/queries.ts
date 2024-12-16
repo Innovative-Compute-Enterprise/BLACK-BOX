@@ -4,7 +4,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { cache } from 'react';
 import { Message, ChatHistory } from '@/types/chat';
 
-import { getModelHandler } from './models';
+import { getModelHandler } from './llms';
 import { generateUniqueId } from '../uniqueId';
 
 /**

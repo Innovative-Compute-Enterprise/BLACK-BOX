@@ -3,6 +3,16 @@ import crypto from 'crypto';
 import axios from 'axios';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Define Gemini API specific interfaces
+interface GeminiContentPart {
+  text: string;
+}
+
+interface GeminiMessage {
+    role: 'user' | 'model';
+    parts: GeminiContentPart[];
+}
+
 // Convert image URLs to base64 data URLs
 async function getImageDataUrl(imageUrl: string): Promise<string> {
   try {
@@ -28,22 +38,22 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
 
   try {
     // Prepare the user messages for the API request
-    const userMessages = await Promise.all(
-      messages.map(async (msg: Message) => {
-        const parts = await Promise.all(
-          msg.content.map(async (item) => {
-            if (item.type === 'image_url') {
-              const dataUrl = await getImageDataUrl(item.image_url.url);
-              return { text: `Image: ${dataUrl}` };  
-            } else if (item.type === 'text') {
-              return { text: item.text };
-            }
-            throw new Error('Unsupported content type');
-          })
-        );
-        return { role: 'user', parts };  
-      })
-    );
+    const userMessages: GeminiMessage[] = await Promise.all(
+        messages.map(async (msg: Message) => {
+          const parts = await Promise.all(
+            msg.content.map(async (item) => {
+              if (item.type === 'image_url') {
+                const dataUrl = await getImageDataUrl(item.image_url.url);
+                return { text: `Image: ${dataUrl}` };  
+              } else if (item.type === 'text') {
+                return { text: item.text };
+              }
+              throw new Error('Unsupported content type');
+            })
+          );
+          return { role: 'user', parts } as GeminiMessage;  
+        })
+      );
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.0-flash-exp',

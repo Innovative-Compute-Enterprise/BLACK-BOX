@@ -2,11 +2,16 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Message } from '@/types/chat';
 import axios from 'axios';
 import crypto from 'crypto';
-import { ImageBlockParam, MessageParam, TextBlockParam } from '@anthropic-ai/sdk/resources';
+import { ImageBlockParam, TextBlockParam } from '@anthropic-ai/sdk/resources';
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
 });
+
+interface AnthropicMessageParam {
+  role: 'user' | 'assistant';
+  content: string | (TextBlockParam | ImageBlockParam)[];
+}
 
 async function getImageDataUrl(imageUrl: string): Promise<string> {
   try {
@@ -24,13 +29,13 @@ async function getImageDataUrl(imageUrl: string): Promise<string> {
 
 export async function generateResponse(messages: Message[]): Promise<Message> {
   try {
-    const formattedMessages: MessageParam[] = await Promise.all(
-      messages.map(async (msg): Promise<MessageParam> => {
+    const formattedMessages: AnthropicMessageParam[] = await Promise.all(
+      messages.map(async (msg): Promise<AnthropicMessageParam> => {
         if (typeof msg.content === 'string') {
           return {
-            role: msg.role,
+            role: msg.role === 'system' ? 'assistant' : msg.role,
             content: msg.content,
-          };
+          } as AnthropicMessageParam;
         } else if (Array.isArray(msg.content)) {
           const contentItems: (TextBlockParam | ImageBlockParam)[] = await Promise.all(
             msg.content.map(async (item): Promise<TextBlockParam | ImageBlockParam> => {
@@ -49,9 +54,9 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
             })
           );
           return {
-            role: msg.role,
+            role: msg.role === 'system' ? 'assistant' : msg.role,
             content: contentItems,
-          };
+          } as AnthropicMessageParam;
         }
         throw new Error('Invalid message content format');
       })
@@ -62,7 +67,6 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
       max_tokens: 1000,
       messages: formattedMessages,
     });
-    
 
     if (!response.content || response.content.length === 0) {
       throw new Error('No content returned from the assistant.');
@@ -73,7 +77,7 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
       .filter(block => block.type === 'text')
       .map(block => block.text)
       .join('');
-    
+
     return {
       id: response.id || crypto.randomUUID(),
       role: 'assistant',

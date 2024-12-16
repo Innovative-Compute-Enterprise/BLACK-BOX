@@ -2,8 +2,8 @@
 
 import { Message, ChatHistory } from '@/types/chat';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { getModelHandler } from './models';
-import { generateChatTitle } from './models'; 
+import { getModelHandler } from './llms';
+import { generateChatTitle } from './llms'; 
 import { randomUUID } from 'crypto';
 
 // create SessionId
