@@ -73,8 +73,8 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
     }
 
     // Extract text content, handling different block types
-    const assistantContent = response.content
-      .filter(block => block.type === 'text')
+   const assistantContent = response.content
+      .filter((block): block is { type: 'text'; text: string } => block.type === 'text' && 'text' in block)
       .map(block => block.text)
       .join('');
 
