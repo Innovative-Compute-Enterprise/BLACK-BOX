@@ -1,7 +1,7 @@
 // MessageBubble.tsx
 'use client'
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
@@ -14,25 +14,25 @@ interface MessageBubbleProps {
   message: Message;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ message }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const [copied, setCopied] = useState<string | null>(null);
 
-  const copyToClipboard = (code: string, id: string) => {
+  const copyToClipboard = useCallback((code: string, id: string) => {
     navigator.clipboard.writeText(code).then(() => {
       setCopied(id);
       setTimeout(() => setCopied(null), 2000);
     });
-  };
+  }, []);
 
-  const formatFileSize = (bytes: number): string => {
+  const formatFileSize = useCallback((bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  }, []);
 
-  const renderFile = (file: File) => {
+  const renderFile = useCallback((file: File) => {
     const isImage = file.type.startsWith('image/');
     const fileSize = formatFileSize(file.size);
 
@@ -75,7 +75,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ message }) => 
         </div>
       </div>
     );
-  };
+  }, [formatFileSize]);
 
   const renderMessageContent = useMemo(() => {
     if (message.role === 'user') {
@@ -111,8 +111,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ message }) => 
           {/* User Message File Attachments */}
           {message.files && message.files.length > 0 && (
             <div className="mt-2">
-              {message.files.map((file, idx) => (
-                <div key={`file-${idx}`}>{renderFile(file)}</div>
+              {message.files.map((file) => (
+                <React.Fragment key={file.name}>
+                  {renderFile(file)}
+                </React.Fragment>
               ))}
             </div>
           )}
@@ -261,13 +263,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ message }) => 
       }
       return null;
     });
-  }, [message, copied]);
+  }, [message, copied, renderFile]);
 
   return (
     <div
       className={`transition-all duration-200 ease-in-out ${
         message.role === 'user'
-          ? 'bg-blue-500 text-white rounded-3xl max-w-sm px-5 py-4'
+          ? 'bg-blue-500 text-white rounded-3xl max-w-sm px-3 py-2'
           : 'text-black dark:text-white '
       }`}
     >
@@ -276,6 +278,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ message }) => 
       </div>
     </div>
   );
-});
+};
 
-export default React.memo(MessageBubble);
+MessageBubble.displayName = 'MessageBubble';
+
+export default MessageBubble;
