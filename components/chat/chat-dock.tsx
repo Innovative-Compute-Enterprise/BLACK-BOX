@@ -52,7 +52,7 @@ function ChatDock({
 
   const renderEmptyState = () => (
     <div className="w-full h-[calc(100vh-3rem)] flex flex-col justify-center">
-      <div className="max-w-3xl mx-auto px-3 w-full -translate-y-16">
+      <div className="max-w-2xl mx-auto px-3 w-full -translate-y-16">
         {/* Empty State Message */}
         <div className="flex justify-center items-center mb-6">
           <BlackBox className="size-12" />
@@ -106,7 +106,7 @@ function ChatDock({
 
   const renderRegularLayout = () => (
     <div className="w-full">
-      <div className="2xl:max-w-3xl max-w-2xl mx-auto px-3 w-full relative">
+      <div className="max-w-3xl mx-auto px-3 w-full relative">
         {/* Selected Files Display */}
         {selectedFiles.length > 0 && (
           <div className="mb-4">

@@ -87,7 +87,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               return (
                 <div
                   key={idx}
-                  className="text-gray-800 dark:text-gray-200 text-base leading-relaxed"
+                  className="text-gray-800 dark:text-gray-200 text-base leading-loose"
                 >
                   {contentItem.text}
                 </div>
@@ -135,7 +135,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         return (
           <ReactMarkdown
             key={idx}
-            className="prose dark:prose-invert text-base leading-relaxed"
+            className="prose dark:prose-invert text-base leading-loose"
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeSanitize]}
             components={{
@@ -270,7 +270,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       className={`transition-all duration-200 ease-in-out ${
         message.role === 'user'
           ? 'bg-blue-500 text-white rounded-3xl max-w-sm px-3 py-2'
-          : 'text-black dark:text-white '
+          : 'text-black dark:text-white leading-looses'
       }`}
     >
       <div>
