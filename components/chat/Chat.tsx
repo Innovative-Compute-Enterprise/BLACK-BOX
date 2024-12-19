@@ -7,6 +7,8 @@ import { useChatSession } from '@/hooks/useChatSession';
 import MessageDisplay from './MessageDisplay';
 import ChatDock from './chat-dock';
 import ChatHeader from './subcomponents/buttonTopLeft';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+
 
 interface ChatProps {
   sessionId?: string;

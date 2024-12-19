@@ -11,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/shadcn/sidebar';
 import { Badge } from '@/components/shadcn/badge'
 import SettingsIcon from '@/components/icons/Settings';
@@ -18,7 +19,6 @@ import { ChatHistory, ChatHistoryProps } from './sidebar/chat-history';
 import { ChatSearch } from './sidebar/chat-search';
 import { Settings } from './sidebar/chat-settings';
 import { SubscriptionWithProduct } from '@/types/types';
-
 
 interface AppSidebarProps extends ChatHistoryProps {
   subscription?: SubscriptionWithProduct | null;
@@ -52,12 +52,24 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { isMobile, setOpenMobile } = useSidebar(); 
 
   const handleItemClick = (action?: string) => {
     if (action === 'search') {
       setIsSearchOpen(true);
     } else if (action === 'settings') {
       setIsSettingsOpen(true);
+    }
+
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  const handleChatSelection = (id: string) => {
+    onChatSelection(id);
+    if (isMobile) {
+      setOpenMobile(false);
     }
   };
 
@@ -68,7 +80,7 @@ export function AppSidebar({
       const productName = subscription.prices?.products?.name;
       planName = productName 
         ? productName + (subscription.status === 'trialing' ? ' (Trial)' : '')
-        : 'Pro Plan';
+        : 'Free tier';
     }
   }
   return (
@@ -113,7 +125,7 @@ export function AppSidebar({
                 currentSessionId={currentSessionId}
                 onEditChat={onEditChat}
                 onDeleteChat={onDeleteChat}
-                onChatSelection={onChatSelection}
+                onChatSelection={handleChatSelection}
               />
             </SidebarGroupContent>
           </SidebarGroup>
@@ -126,7 +138,7 @@ export function AppSidebar({
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
           onChatSelection={(id) => {
-            onChatSelection(id);
+            handleChatSelection(id);
             setIsSearchOpen(false);
           }}
         />

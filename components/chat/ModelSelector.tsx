@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import { Listbox, ListboxOption, ListboxButton, ListboxOptions } from '@headlessui/react';
-import { useRouter } from 'next/navigation'; // App Router
-import { ChatContext } from '@/context/ChatContext';
+import { useRouter } from 'next/navigation';
+import { useIsMobile } from "@/hooks/use-mobile"
 import clsx from 'clsx';
 
 interface ModelSelectorProps {
@@ -14,13 +14,14 @@ interface ModelSelectorProps {
 
 const models = [
   // { id: 'gpt-4o-mini', name: 'GPT-4o', description: 'Exepcional para tarefas diarias.' },
-  { id: 'gemini', name: 'Gemini', description: 'Feito para tarefas gigantes.' },
+  { id: 'gemini', name: 'Gemini 2.0', description: 'Feito para tarefas gigantes.' },
   // { id: 'claude-sonnet-3.5', name: 'Sonnet-3.5', description: 'Exelente para tarefas dificeis' },
 ];
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelLocked }) => {
-  const { model: contextModel } = useContext(ChatContext);
    const router = useRouter();
+   const isMobile = useIsMobile();
+
 
   // // Update the URL whenever the model changes
   // useEffect(() => {
@@ -47,7 +48,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelL
   const selectedModelInfo = models.find((m) => m.id === selectedModel);
 
   return (
-    <div className="relative inline-block text-left w-full ml-1">
+    <div className="relative inline-block text-center w-full max-w-fit z-20">
       <Listbox
         value={selectedModel}
         onChange={handleModelChange} 
@@ -59,19 +60,20 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelL
           <>
             <ListboxButton
               className={clsx(
-                'relative w-full rounded-lg py-1 pl-3 pr-10 text-left bg-[#0E0E0E]/15 dark:bg-[#F1F1F1]/15',
+                'relative w-full rounded-lg py-1 px-2.5 bg-[#0E0E0E]/15 dark:bg-[#F1F1F1]/15',
                 'text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-1',
                 isModelLocked ? 'bg-gray-100 dark:bg-zinc-900 cursor-not-allowed' : 'cursor-pointer',
                 'flex justify-between items-center'
               )}
             >
-              <span className="block px-1 font-extrabold">{selectedModelInfo?.name}</span>
+              <span className="block px-1 font-extrabold text-sm">{selectedModelInfo?.name}</span>
             </ListboxButton>
 
             <ListboxOptions
               className={clsx(
-                'absolute mt-2 space-y-2 focus:outline-none w-[293px] rounded-xl p-3 dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border backdrop-blur-lg',
-                'max-h-120 overflow-auto focus:outline-none'
+                'absolute mt-2 space-y-2 focus:outline-none w-[293px] rounded-xl text-left p-3 dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border backdrop-blur-lg',
+                'max-h-120 overflow-auto focus:outline-none',
+                isMobile ? 'left-1/2 -translate-x-1/2' : 'left-0'
               )}
             >
               <div>

@@ -1,12 +1,14 @@
+// ChatDock.tsx
 "use client";
 import React, { useContext } from "react";
 import { ChatContext } from "@/context/ChatContext";
-import TextInput from "./subcomponents/dock/input";
-import SendButton from "./subcomponents/dock/submit";
-import FileUploadButton from "./subcomponents/dock/upload-button";
-import SelectedFilesDisplay from "./subcomponents/dock/uploaded-files";
+import { useIsMobile } from "@/hooks/use-mobile"
+import TextInput from "../chat/dock/input";
+import SendButton from "../chat/dock/submit";
+import FileUploadButton from "../chat/dock/upload-button";
+import SelectedFilesDisplay from "../chat/dock/uploaded-files";
 import BlackBox from "../icons/BlackBox";
-import WebSearchButton from "./subcomponents/dock/web-search";
+import WebSearchButton from "./dock/web-search";
 
 interface InputAreaProps {
   input: string;
@@ -45,6 +47,7 @@ function ChatDock({
   onRemoveFile,
 }: InputAreaProps) {
   const { model: contextModel } = useContext(ChatContext);
+  const isMobile = useIsMobile();
   const showFileButton = canHandleFiles(contextModel);
 
   const renderEmptyState = () => (
@@ -54,6 +57,17 @@ function ChatDock({
         <div className="flex justify-center items-center mb-6">
           <BlackBox className="size-12" />
         </div>
+
+        {/* Conditional File Display for Mobile */}
+        {isMobile && selectedFiles.length > 0 && (
+          <div className="mb-4">
+            <SelectedFilesDisplay
+              files={selectedFiles}
+              onRemoveFile={onRemoveFile}
+            />
+          </div>
+        )}
+        
         <div className="flex flex-col dark:bg-[#0E0E0E]/60 bg-[#F1F1F1]/60 dark:border-[#ffffff]/10 border-black/10 border rounded-3xl py-1 px-2.5">
           <div className="flex items-start">
             {/* Text Input */}
@@ -85,16 +99,6 @@ function ChatDock({
             </ButtonWrapper>
           </div>
         </div>
-  
-        {/* Selected Files Display */}
-        {selectedFiles.length > 0 && (
-          <div className="mt-2">
-            <SelectedFilesDisplay
-              files={selectedFiles}
-              onRemoveFile={onRemoveFile}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -102,7 +106,7 @@ function ChatDock({
 
   const renderRegularLayout = () => (
     <div className="w-full">
-      <div className="2xl:max-w-3xl max-w-2xl mx-auto px-3 w-full relative pb-3">
+      <div className="2xl:max-w-3xl max-w-2xl mx-auto px-3 w-full relative">
         {/* Selected Files Display */}
         {selectedFiles.length > 0 && (
           <div className="mb-4">
