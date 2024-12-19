@@ -100,18 +100,18 @@ const MessageRow: React.FC<MessageRowProps> = ({
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className="relative inline-block">
+      <div className={`relative inline-block w-full ${isUser ? 'flex justify-end' : 'justify-start'}`}>
         {message.role === 'assistant' && message.pending ? (
           <div className="flex items-center justify-center h-full">
             <LoadingSpinner />
           </div>
         ) : (
-          <MessageBubble 
-            message={{ 
-              ...message, 
+          <MessageBubble
+            message={{
+              ...message,
               content: currentContent,
-              pending: message.pending 
-            }} 
+              pending: message.pending
+            }}
           />
         )}
         {!isUser && (

@@ -39,7 +39,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     return (
       <div
         key={file.name}
-        className="flex items-start space-x-2 mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+        className="flex items-start space-x-2 mt-2 p-3  rounded-lg border border-gray-200 dark:border-gray-700"
       >
         {isImage ? (
           <svg
@@ -87,7 +87,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               return (
                 <div
                   key={idx}
-                  className="text-gray-800 dark:text-gray-200 text-base leading-loose"
+                  className="text-black dark:text-white text-base leading-loose tracking-wider"
                 >
                   {contentItem.text}
                 </div>
@@ -269,8 +269,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     <div
       className={`transition-all duration-200 ease-in-out ${
         message.role === 'user'
-          ? 'bg-blue-500 text-white rounded-3xl max-w-sm px-3 py-2'
-          : 'text-black dark:text-white leading-looses'
+          ? 'bg-gray-200 dark:bg-zinc-800 rounded-2xl max-w-sm px-3.5 py-2'
+          : 'text-black dark:text-white leading-loose tracking-wider'
       }`}
     >
       <div>

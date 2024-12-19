@@ -26,7 +26,7 @@ const MessageActions: React.FC<MessageActionsProps> = ({ message, copiedId, hand
   const messageText = getMessageText(message); // Obtenha o texto completo da mensagem
 
   return (
-    <div className="space-x-2 pt-2">
+    <div className="space-x-2">
       {message.role === 'assistant' && ( // Check if the message is from the assistant
         <CopyToClipboard text={messageText} onCopy={() => handleCopy(message.id)}>
           <button

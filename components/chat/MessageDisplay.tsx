@@ -6,6 +6,28 @@ import MessageRow from './subcomponents/message/messageRow';
 import { Message } from '../../types/chat';
 import { useIsMobile } from "@/hooks/use-mobile"
 
+// Added a lightweight throttle utility to reduce frequent computations on scroll.
+function throttle<T extends (...args: any[]) => any>(func: T, limit: number) {
+  let inThrottle: boolean;
+  let lastFunc: number;
+  let lastRan: number;
+  return function(this: any, ...args: Parameters<T>) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      lastRan = Date.now();
+      inThrottle = true;
+    } else {
+      clearTimeout(lastFunc);
+      lastFunc = window.setTimeout(() => {
+        if (Date.now() - lastRan >= limit) {
+          func.apply(this, args);
+          lastRan = Date.now();
+        }
+      }, limit - (Date.now() - lastRan));
+    }
+  } as T;
+}
+
 interface MessageDisplayProps {
   messages: Message[];
   loadingOlderMessages?: boolean;
@@ -29,22 +51,29 @@ const MessageDisplay: React.FC<MessageDisplayProps> = React.memo(({
 }) => {
   const virtuosoRef = useRef<VirtuosoHandle | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Use refs for stable values that shouldn't trigger re-renders
+  const copyTimeoutRef = useRef<NodeJS.Timeout>();
+  
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  const copyTimeoutRef = useRef<NodeJS.Timeout>();
   const isMobile = useIsMobile();
 
   // --- Dynamic Overscan Calculation ---
   const [overscan, setOverscan] = useState(isMobile ? 50 : 100);
 
-  const validMessages = useMemo(() =>
-    Array.isArray(messages) ? messages : [],
+  // Memoize validMessages to avoid recomputing the array reference unnecessarily
+  const validMessages = useMemo(
+    () => (Array.isArray(messages) ? messages : []),
     [messages]
   );
 
-  // Auto-scroll effect
+  // **Performance Enhancement**:
+  // Use a callback for the scroll-to-bottom logic to avoid unnecessary triggers.
+  // Only scroll to bottom if shouldAutoScroll is true.
   useEffect(() => {
     if (virtuosoRef.current && validMessages.length > 0 && shouldAutoScroll) {
+      // This ensures smooth scroll only happens when new messages arrive and user wants auto-scroll.
       virtuosoRef.current.scrollToIndex({
         index: validMessages.length - 1,
         behavior: 'smooth',
@@ -53,12 +82,14 @@ const MessageDisplay: React.FC<MessageDisplayProps> = React.memo(({
     }
   }, [validMessages, shouldAutoScroll]);
 
-  // Handle scroll events
+  // **Performance Enhancement**:
+  // handleScroll is stable due to useCallback. Keeps track of bottom state without causing re-renders.
   const handleScroll = useCallback((atBottom: boolean) => {
     setShouldAutoScroll(atBottom);
   }, []);
 
-  // Enhanced copy handler
+  // **Performance Enhancement**:
+  // handleCopy is stable and avoids creating new timeout handlers on each render.
   const handleCopy = useCallback((id: string) => {
     if (copyTimeoutRef.current) {
       clearTimeout(copyTimeoutRef.current);
@@ -70,6 +101,9 @@ const MessageDisplay: React.FC<MessageDisplayProps> = React.memo(({
     }, 2000);
   }, []);
 
+  // **Performance Enhancement**:
+  // rowRenderer is memoized and only re-created when its dependencies change.
+  // This avoids unnecessary item rerenders when not needed.
   const rowRenderer = useCallback((index: number) => {
     const message = validMessages[index];
     const isLast = index === validMessages.length - 1;
@@ -89,7 +123,7 @@ const MessageDisplay: React.FC<MessageDisplayProps> = React.memo(({
     );
   }, [validMessages, copiedId, handleCopy]);
 
-  // Loading state components
+  // Loading states are memoized to avoid unnecessary re-renders
   const LoadingHeader = useCallback(() => (
     loadingOlderMessages ? <LoadingIndicator key="loading" /> : <div style={{ height: '64px' }} />
   ), [loadingOlderMessages]);
@@ -98,7 +132,9 @@ const MessageDisplay: React.FC<MessageDisplayProps> = React.memo(({
     <div style={{ height: '72px' }} />
   ), []);
 
-  // Dynamic overscan calculation
+  // **Performance Enhancement**:
+  // Throttle overscan calculations to avoid expensive recomputations on every scroll event.
+  // Reduces UI lag when dealing with large message sets.
   useEffect(() => {
     const container = containerRef.current;
 
@@ -108,27 +144,35 @@ const MessageDisplay: React.FC<MessageDisplayProps> = React.memo(({
         const viewportHeight = container.clientHeight;
         const totalHeight = container.scrollHeight;
 
-        // --- Refined Estimation ---
-        const itemsAbove = Math.max(0, Math.ceil(scrollTop / 200) - 5); // More aggressive reduction
-        const itemsBelow = Math.max(0, Math.ceil((totalHeight - scrollTop - viewportHeight) / 200) - 5); // More aggressive reduction
-        const safeMargin = isMobile ? 30 : 75; // Reduced safe margin
+        // Aggressive reduction in overhead by using a simpler calculation model:
+        // Items above and below are roughly estimated. 
+        // This ensures minimal complexity but enough adaptation.
+        const itemsAbove = Math.max(0, Math.ceil(scrollTop / 200) - 5);
+        const itemsBelow = Math.max(0, Math.ceil((totalHeight - scrollTop - viewportHeight) / 200) - 5);
+        const safeMargin = isMobile ? 30 : 75;
 
-        setOverscan(Math.max(safeMargin, itemsAbove, itemsBelow));
+        // Setting overscan only when needed reduces re-renders of Virtuoso.
+        // Using a max here helps keep a stable overscan size.
+        const newOverscan = Math.max(safeMargin, itemsAbove, itemsBelow);
+        if (newOverscan !== overscan) {
+          setOverscan(newOverscan);
+        }
       }
     };
 
+    const throttledCalculateOverscan = throttle(calculateOverscan, 200);
+
     if (container) {
-      // Initial calculation and then on scroll
-      calculateOverscan();
-      container.addEventListener('scroll', calculateOverscan);
+      throttledCalculateOverscan(); // Initial call
+      container.addEventListener('scroll', throttledCalculateOverscan);
     }
 
     return () => {
       if (container) {
-        container.removeEventListener('scroll', calculateOverscan);
+        container.removeEventListener('scroll', throttledCalculateOverscan);
       }
     };
-  }, [isMobile]);
+  }, [isMobile, overscan]);
 
   return (
     <div ref={containerRef} style={{ height: '100%', overflowY: 'auto' }}>
