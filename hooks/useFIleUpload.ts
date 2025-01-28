@@ -1,3 +1,4 @@
+// hooks/useFileUpload
 import { useState, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { convertImageToWebp } from '@/utils/chat/convertImageToWebp';
@@ -166,9 +167,13 @@ export const useFileUpload = (userId: string) => {
     const uploadPromises = files.map(async (file) => {
       try {
         const processor = getFileProcessor(file);
-        return await processor.process(file);
+        console.log(`Processing file: ${file.name}, type: ${processor.type}`); // Log before processing
+        const messageContent = await processor.process(file);
+        console.log(`File ${file.name} processed successfully. MessageContent:`, messageContent); // Log successful processing
+        return messageContent;
       } catch (error) {
         console.error(`Error processing file ${file.name}:`, error);
+        console.error("Detailed error:", error); // Log detailed error
         return {
           type: 'text' as const,
           text: `Error processing file ${file.name}: ${error.message}`

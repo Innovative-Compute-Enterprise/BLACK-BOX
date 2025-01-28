@@ -39,21 +39,23 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
   try {
     // Prepare the user messages for the API request
     const userMessages: GeminiMessage[] = await Promise.all(
-        messages.map(async (msg: Message) => {
-          const parts = await Promise.all(
-            msg.content.map(async (item) => {
-              if (item.type === 'image_url') {
-                const dataUrl = await getImageDataUrl(item.image_url.url);
-                return { text: `Image: ${dataUrl}` };  
-              } else if (item.type === 'text') {
-                return { text: item.text };
-              }
-              throw new Error('Unsupported content type');
-            })
-          );
-          return { role: 'user', parts } as GeminiMessage;  
-        })
-      );
+      messages.map(async (msg: Message) => {
+        console.log("Inspecting msg.content:", msg.content); // <-- ADD THIS LINE FOR LOGGING
+        const parts = await Promise.all(
+          msg.content.map(async (item) => { // <-- LINE WHERE ERROR OCCURS
+            if (item.type === 'image_url') {
+              const dataUrl = await getImageDataUrl(item.image_url.url);
+              return { text: `Image: ${dataUrl}` };
+            } else if (item.type === 'text') {
+              return { text: item.text };
+            }
+            throw new Error('Unsupported content type');
+          })
+        );
+        return { role: 'user', parts } as GeminiMessage;
+      })
+    );
+
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.0-flash-exp',

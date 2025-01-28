@@ -1,9 +1,11 @@
+// ChatLayoutClient.tsx
 'use client'
-import { AppSidebar } from '@/components/chat/chat-sidebar'
+
+import React from 'react';
+import { AppSidebar } from '@/components/chat/chat-sidebar';
 import { SubscriptionWithProduct } from '@/types/types';
-import { useChatContext } from '@/context/ChatContext'
-import { useChatSession } from '@/hooks/useChatSession'
-import { useChat } from '@/hooks/useChat'
+import { useChatContext } from '@/context/ChatContext';
+import { useChat } from '@/hooks/useChat';
 
 interface ChatLayoutClientProps {
   children: React.ReactNode;
@@ -11,22 +13,22 @@ interface ChatLayoutClientProps {
   subscription?: SubscriptionWithProduct | null;
 }
 
-export function ChatLayoutClient({ children, sessionId, subscription }: ChatLayoutClientProps) {
-  const { model, setModel } = useChatContext();
-  
+export function ChatLayoutClient({
+  children,
+  sessionId,
+  subscription,
+}: ChatLayoutClientProps) {
+  const { model } = useChatContext();
+
   const {
     userId,
     currentSessionId,
     chatHistories,
     handleEditChat,
     handleDeleteChat,
-  } = useChatSession(sessionId, setModel);
-
-  const { loadChatFromHistory } = useChat({ 
-    userId, 
-    sessionId: currentSessionId, 
-    model
-  });
+    loadChatFromHistory, 
+    fetchChatHistories 
+  } = useChat({ sessionId: sessionId || undefined });
 
   return (
     <>
@@ -36,9 +38,11 @@ export function ChatLayoutClient({ children, sessionId, subscription }: ChatLayo
         currentSessionId={currentSessionId}
         onEditChat={handleEditChat}
         onDeleteChat={handleDeleteChat}
-        onChatSelection={loadChatFromHistory}
+        onChatSelection={loadChatFromHistory} // Use loadChatFromHistory directly
+        fetchChatHistories={fetchChatHistories} // Pass fetchChatHistories
+        userId={userId} // Pass userId if AppSidebar needs user info
       />
       {children}
-      </>
+    </>
   );
 }

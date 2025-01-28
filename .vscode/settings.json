@@ -20,7 +20,7 @@
   "editor.fontFamily": "JetBrains Mono",
   "editor.fontLigatures": true,
   "terminal.integrated.fontFamily": "monospace",
-  "editor.fontSize": 14,
+  "editor.fontSize": 15,
   
   "workbench.startupEditor": "none",
   "githubPullRequests.createOnPublishBranch": "never",
@@ -29,7 +29,7 @@
       "OPENAI"
   ],
   "symbols.hidesExplorerArrows": false,
-  "workbench.colorTheme": "Min Dark",
+  "workbench.colorTheme": "Min Darker Theme (by GmsGarcia)",
   "editor.lineHeight": 1.8,
   "editor.stickyScroll.maxLineCount": 3,
   "window.zoomLevel": 0,
@@ -45,5 +45,6 @@
   },
   "json.schemas": [
 
-  ]
+],
+"editor.cursorStyle": "line"
 }

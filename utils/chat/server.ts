@@ -1,6 +1,6 @@
 // server.ts
 
-import { Message, ChatHistory } from '@/types/chat';
+import { Message, ChatHistory, MessageContent } from '@/types/chat';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getModelHandler } from './llms';
 import { generateChatTitle } from './llms'; 
@@ -36,7 +36,7 @@ export async function handlePost({
   model,
   supabase,
 }: {
-  content: string;
+  content: MessageContent[];
   model: string;
   sessionId: string | null;
   userId: string;

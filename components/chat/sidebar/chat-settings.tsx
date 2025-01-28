@@ -23,6 +23,7 @@ interface SettingsProps {
 export function Settings({ isOpen, onClose }: SettingsProps) {
   const { theme, setTheme } = useTheme();
 
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>

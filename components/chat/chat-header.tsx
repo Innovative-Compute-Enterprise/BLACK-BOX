@@ -19,13 +19,13 @@ const ChatHeader: React.FC<ChatHeaderProps> = React.memo(
     const isMobile = useIsMobile();
 
     return (
-      <header className="relative flex items-center px-2 py-3 md:pt-3 md:pb-0">
-        <div className="flex items-center gap-2 w-full">
+      <header className="fixed z-[333] dark:bg-black bg-white w-full flex items-center px-3">
+        <div className="flex items-center gap-2 w-full py-2.5">
           <Tooltip
             content="Menu lateral"
             showArrow={true}
-            closeDelay={300}
-            className="bg-[#2B2B2B]/70 backdrop-blur-xl rounded-md text-white text-sm"
+            closeDelay={100}
+            className="bg-[#2B2B2B] rounded-lg text-white text-sm"
           >
             <span className="inline-flex">
               <SidebarTrigger />
@@ -46,10 +46,10 @@ const ChatHeader: React.FC<ChatHeaderProps> = React.memo(
           <Tooltip
             content="Novo chat"
             showArrow={true}
-            closeDelay={300}
-            className="bg-[#2B2B2B]/70 backdrop-blur-xl rounded-md text-white text-sm ml-auto" // Added ml-auto here
+            closeDelay={100}
+            className="bg-[#2B2B2B] rounded-lg text-white text-sm" 
           >
-            <button onClick={handleNewChat} className="relative p-2">
+            <button onClick={handleNewChat} className="p-1.5 relative hover:bg-zinc-100 rounded-lg cursor-pointer dark:hover:bg-zinc-900">
               <NewChat
                 className="fill-black/10 backdrop-blur text-black dark:fill-white/10 dark:text-white"
                 style={{ width: '18px', height: '18px' }}

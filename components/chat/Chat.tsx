@@ -2,27 +2,17 @@
 'use client'
 import React from 'react';
 import { useChatContext } from '@/context/ChatContext';
-import { useChat } from '@/hooks/useChat';
-import { useChatSession } from '@/hooks/useChatSession';
+import { useChat } from '@/hooks/useChat'; 
 import MessageDisplay from './MessageDisplay';
 import ChatDock from './chat-dock';
-import ChatHeader from './subcomponents/buttonTopLeft';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-
+import ChatHeader from './chat-header';
 
 interface ChatProps {
   sessionId?: string;
 }
 
-export default function Chat({ sessionId }: ChatProps) {
-  const { model, setModel } = useChatContext();
-  const {
-    userId,
-    currentSessionId,
-    isModelLocked,
-    isInitialized,
-  } = useChatSession(sessionId, setModel);
-
+export function Chat({ sessionId }: ChatProps) {
+  const { model, setModel, isDrawerOpen, toggleDrawer, isModelLocked } = useChatContext(); 
   const {
     messages,
     inputMessage,
@@ -33,14 +23,18 @@ export default function Chat({ sessionId }: ChatProps) {
     handleFilesSelected,
     handleRemoveFile,
     handleNewChat,
-  } = useChat({ 
-    userId, 
-    sessionId: currentSessionId,
-    model 
-  });
+    chatHistories, 
+    loadChatFromHistory, 
+    handleEditChat, 
+    handleDeleteChat,  
+    setCurrentSessionId, 
+    currentSessionId, 
+    fetchChatHistories, 
+    userId
+  } = useChat({ sessionId: sessionId || undefined }); 
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div className="flex-1 flex flex-col relative">
       <ChatHeader
         model={model}
         setModel={setModel}
@@ -48,7 +42,7 @@ export default function Chat({ sessionId }: ChatProps) {
         isModelLocked={isModelLocked}
       />
       
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative">
         <MessageDisplay messages={messages} />
       </div>
 
@@ -57,7 +51,7 @@ export default function Chat({ sessionId }: ChatProps) {
           input={inputMessage}
           setInput={setInputMessage}
           handleSendMessage={handleSendMessage}
-          isSubmitting={isSubmitting || !isInitialized || !userId}
+          isSubmitting={isSubmitting || !userId}
           onFilesSelected={handleFilesSelected}
           selectedFiles={selectedFiles}
           onRemoveFile={handleRemoveFile}

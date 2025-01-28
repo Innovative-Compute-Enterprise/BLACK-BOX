@@ -1,88 +1,75 @@
-'use client';
+"use client";
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from "react";
 
 interface TextInputProps {
-    input: string;
-    setInput: (value: string) => void;
-    handleSendMessage: () => void;
+  input: string;
+  className?: string;
+  setInput: (value: string) => void;
+  handleSendMessage: () => void;
+  rows: number;
 }
 
-function TextInput({ input, setInput, handleSendMessage }: TextInputProps) {
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const [isMultiline, setIsMultiline] = useState(false);
+function TextInput({ input, setInput, handleSendMessage, className = "", rows }: TextInputProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isMultiline, setIsMultiline] = useState(false);
 
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      const newHeight = Math.min(textarea.scrollHeight, 300);
+      textarea.style.height = `${newHeight}px`;
+      setIsMultiline(textarea.scrollHeight > textarea.clientHeight || input.includes("\n"));
+    }
+  }, [input]);
 
-    const adjustTextareaHeight = useCallback(() => {
-        const textarea = textareaRef.current;
-        if (textarea) {
-            // Reset height before recalculating
-            textarea.style.height = 'auto';
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    setTimeout(adjustTextareaHeight, 0);
+  };
 
-            // Calculate new height while respecting max height (180px)
-            const newHeight = Math.min(textarea.scrollHeight, 300);
-            textarea.style.height = `${newHeight}px`;
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (input.trim()) {
+        handleSendMessage();
+      }
+    }
+  };
 
-            // Update multiline state if content exceeds one line or contains '\n'
-            setIsMultiline(
-                textarea.scrollHeight > textarea.clientHeight || input.includes('\n')
-            );
-        }
-    }, [textareaRef, input]);
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [adjustTextareaHeight]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setInput(e.target.value);
-        // Defer height adjustment until after the value updates
-        setTimeout(adjustTextareaHeight, 0);
-    };
+  const baseClassName = `
+    w-full
+    placeholder:opacity-30
+    dark:text-white 
+    bg-white 
+    dark:bg-black
+    text-black 
+    border-0
+    focus:outline-none 
+    focus:ring-0 
+    resize-none
+    text-lg
+    h-full
+    overflow-y-auto
+  `;
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter') {
-            if (e.shiftKey) {
-                // Let newline occur, then adjust height
-                setTimeout(adjustTextareaHeight, 0);
-            } else {
-                e.preventDefault();
-                if (input.trim()) {
-                    handleSendMessage();
-                }
-            }
-        }
-    };
-
-    useEffect(() => {
-        adjustTextareaHeight();
-    }, [input, adjustTextareaHeight]);
-
-    return (
-        <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Em que posso ajudar?"
-            rows={1}
-            className={`
-        w-full
-        rounded-lg
-        placeholder:opacity-50
-        dark:text-white 
-        bg-transparent
-        text-black 
-        border-none 
-        focus:outline-none 
-        min-h-[44px]
-        focus:ring-0 
-        resize-none
-        text-base
-        py-3
-        px-2
-        overflow-y-auto
-        ${isMultiline ? '' : ''}
-      `}
-            aria-label="Message input"
-        />
-    );
+  return (
+    <textarea
+      ref={textareaRef}
+      value={input}
+      onChange={handleInputChange}
+      onKeyDown={handleKeyDown}
+      rows={rows}
+      placeholder="Message Black Box"
+      className={`${baseClassName} ${className}`}
+      aria-label="Message input"
+    />
+  );
 }
 
 export default TextInput;

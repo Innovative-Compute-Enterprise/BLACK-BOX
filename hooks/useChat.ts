@@ -1,259 +1,443 @@
+// hooks/useChat.ts
 'use client';
-import { generateUniqueId } from '@/utils/uniqueId';
-import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useChatStore } from './useChatStore';
-import { Message } from '@/types/chat';
-import { useFileUpload } from './useFIleUpload';
-import { useChatContext } from './useChatContext';
 
+import { generateUniqueId } from "@/utils/uniqueId";
+import { useCallback, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useChatStore } from "./useChatStore";
+import { Message, ChatHistory } from "@/types/chat";
+import { useFileUpload } from "./useFIleUpload";
+import { useChatContext } from "@/context/ChatContext";
+import { createClient } from '@/utils/supabase/client';
+import { createNewChatSessionAction, sendMessageAction } from '@/src/app/actions'; // Import Server Actions
 
 interface UseChatProps {
-  userId: string;
-  sessionId?: string;
-  model: string;
+    sessionId?: string;
 }
 
-export const useChat = ({ userId, sessionId, model }: UseChatProps) => {
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [inputMessage, setInputMessage] = useState('');
+export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
+    const router = useRouter();
+    const supabase = createClient();
 
-  // Get store values and actions
-  const {
-    messages,
-    setMessages,
-    currentSessionId,
-    setCurrentSessionId,
-    chatHistories,
-    setChatHistories,
-  } = useChatStore()
+    // --- State from useChatSession ---
+    const [userId, setUserId] = useState<string | null>(null);
+    const [currentSessionId, setCurrentSessionId] = useState<string | null>(initialSessionId || null);
+    const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
+    // --- State from useChat ---
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [inputMessage, setInputMessage] = useState("");
 
-  const {
-    setModel,
-    isModelLocked,
-    setIsModelLocked,
-    isInitialized,
-    setIsInitialized,
-  } = useChatContext();
+    // --- Context from useChatContext ---
+    const { model, setModel, isModelLocked, setIsModelLocked, isInitialized, setIsInitialized } = useChatContext();
 
-  // File upload handling
-  const {
-    selectedFiles,
-    handleFilesSelected,
-    handleRemoveFile,
-    processAndUploadFiles,
-    setSelectedFiles,
-  } = useFileUpload(userId);
+    // --- Store from useChatStore ---
+    const { messages, setMessages } = useChatStore(); // Assuming you only need messages and setMessages
 
-  // History fetching
-  const fetchChatHistory = useCallback(async (sessionId: string) => {
-    if (!userId) return
+    // --- File Upload from useFileUpload ---
+    const {
+        selectedFiles,
+        handleFilesSelected,
+        handleRemoveFile,
+        processAndUploadFiles,
+        setSelectedFiles,
+    } = useFileUpload(userId); // userId will be available later
 
-    if (!userId) return null;
-    try {
-      const response = await fetch(`/api/chat?sessionId=${sessionId}`);
-      const data = await response.json();
 
-      if (data.error) {
-        console.error('Error fetching chat history:', data.error);
-        return null;
-      }
+    // --- Auth Handling (Moved from useChatSession) ---
+    useEffect(() => {
+        const getUser = async () => {
+            const { data, error } = await supabase.auth.getUser();
+            if (!error) setUserId(data.user?.id || null);
+        };
 
-      return data;
-    } catch (error) {
-      console.error('Error fetching chat history:', error);
-      return null;
-    }
-  }, [userId]);
+        getUser();
 
-  const fetchChatHistories = useCallback(async () => {
-    if (!userId) return;
+        const { data: authListener } = supabase.auth.onAuthStateChange(
+            (_event, session) => {
+                setUserId(session?.user?.id || null);
+            }
+        );
 
-    try {
-      const response = await fetch(`/api/chat-sessions?userId=${userId}`);
-      const data = await response.json();
+        return () => {
+            authListener?.subscription.unsubscribe();
+        };
+    }, [supabase]);
 
-      if (!data.error) {
-        setChatHistories(data.histories || []);
-      }
-    } catch (error) {
-      console.error('Error fetching chat histories:', error);
-    }
-  }, [userId, setChatHistories]);
 
-  // Message handling
-  const createUserMessage = useCallback((text: string): Message => ({
-    id: generateUniqueId(),
-    content: [{ type: 'text', text: text.trim() }],
-    role: 'user',
-    displayedContent: text.trim(),
-    createdAt: Date.now(),
-  }), []);
+    // --- Fetch Chat Histories (Moved and Modified from useChatSession & useChat) ---
+    const fetchChatHistories = useCallback(async () => {
+        if (!userId) return;
+        try {
+            const response = await fetch(`/api/chat-sessions?userId=${userId}`);
+            const data = await response.json();
+            if (!data.error) {
+                setChatHistories(data.histories || []);
+            }
+        } catch (error) {
+            console.error('Error fetching chat histories:', error);
+        }
+    }, [userId]);
 
-  const createLoadingMessage = useCallback((): Message => ({
-    id: generateUniqueId(),
-    content: [{ type: 'text', text: '' }],
-    displayedContent: '',
-    role: 'assistant',
-    pending: true,
-    createdAt: Date.now(),
-  }), []);
+    useEffect(() => {
+        if (userId) {
+            fetchChatHistories();
+        }
+    }, [userId, fetchChatHistories]);
 
-  const createErrorMessage = useCallback((): Message => ({
-    id: generateUniqueId(),
-    content: [{ type: 'text', text: 'Error sending message. Please try again.' }],
-    role: 'system',
-    displayedContent: 'Error sending message. Please try again.',
-    createdAt: Date.now(),
-  }), []);
 
-  const handleSendMessage = useCallback(async () => {
-    if (!inputMessage.trim() || !userId || !model) {
-        console.error('Missing required data:', { inputMessage, userId, model });
-        return;
-    }
+    // --- Fetch Chat History for a Session (Moved and Modified from useChat) ---
+    const fetchChatHistory = useCallback(
+        async (sessionIdToFetch: string) => {
+            if (!userId) return;
+            try {
+                const response = await fetch(`/api/chat?sessionId=${sessionIdToFetch}`);
+                const data = await response.json();
 
-    if (!inputMessage.trim() && selectedFiles.length === 0) return;
+                if (data.error) {
+                    console.error("Error fetching chat history:", data.error);
+                    return null;
+                }
+                return data;
+            } catch (error) {
+                console.error("Error fetching chat history:", error);
+                return null;
+            }
+        },
+        [userId]
+    );
 
-    let activeSessionId = sessionId || currentSessionId;
-    if (!activeSessionId) {
-      try {
-        const sessionResponse = await fetch('/api/chat-sessions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, model }),
-        });
+    // --- loadChatFromHistory (Modified & Combined from useChat & useChatSession actions) ---
+    const loadChatFromHistory = useCallback(
+        async (id: string) => {
+            const historyData = await fetchChatHistory(id);
+            if (historyData) {
+                setMessages(historyData.messages);
+            } else {
+                setMessages([]); // Clear messages if history fetch fails or is empty
+            }
+            setCurrentSessionId(id); // Update currentSessionId in state
+            router.push(`/chat/${id}`); // Navigate to the sessioned route
+        },
+        [fetchChatHistory, setMessages, router, setCurrentSessionId]
+    );
 
-        if (!sessionResponse.ok) {
-          throw new Error('Failed to create new session');
+    useEffect(() => {
+        if (initialSessionId && userId) {
+            loadChatFromHistory(initialSessionId); // Load chat if sessionId is provided on mount
+        }
+    }, [initialSessionId, userId, loadChatFromHistory]);
+
+
+    // --- Message Creation Functions (From useChat - No Change Needed) ---
+    const createUserMessage = useCallback(
+        (text: string): Message => ({
+            id: generateUniqueId(),
+            content: [{ type: "text", text: text.trim() }],
+            role: "user",
+            displayedContent: text.trim(),
+            createdAt: Date.now(),
+        }),
+        []
+    );
+
+    const createLoadingMessage = useCallback(
+
+        (): Message => ({
+
+            id: generateUniqueId(),
+
+            content: [{ type: "text", text: "" }],
+
+            displayedContent: "",
+
+            role: "assistant",
+
+            pending: true,
+
+            createdAt: Date.now(),
+
+        }),
+
+        []
+
+    );
+    const createErrorMessage = useCallback(
+
+        (): Message => ({
+
+            id: generateUniqueId(),
+
+            content: [
+
+                { type: "text", text: "Error sending message. Please try again." },
+
+            ],
+
+            role: "system",
+
+            displayedContent: "Error sending message. Please try again.",
+
+            createdAt: Date.now(),
+
+        }),
+
+        []
+
+    );
+
+
+    // --- handleSendMessage (Refined Server Action integration with logging) ---
+    const handleSendMessage = useCallback(async () => {
+        if (!inputMessage.trim() && selectedFiles.length === 0 || !userId || !model) {
+            console.error("Missing required data:", { inputMessage, userId, model, selectedFiles });
+            return;
         }
 
-        const { sessionId: newSessionId } = await sessionResponse.json();
-        activeSessionId = newSessionId;
-        setCurrentSessionId(newSessionId);
-        router.push(`/chat/${newSessionId}`);
-        await fetchChatHistories();
-      } catch (error) {
-        console.error('Error creating new session:', error);
-        return;
-      }
-    }
-
-    const userMessage = createUserMessage(inputMessage);
-    const loadingMessage = createLoadingMessage();
-   
-    setIsModelLocked(true);
-      // Show user's message immediately and loading message
-      setMessages(prev => [...prev, { ...userMessage, pending: false, createdAt: Date.now() },  {...loadingMessage, pending:true, createdAt: Date.now() }]);
-    setIsSubmitting(true);
-    setInputMessage('');
-    setSelectedFiles([]);
-    try {
-      const fileObjects = await processAndUploadFiles(selectedFiles);
-      const messageContent = [...userMessage.content, ...fileObjects];
-
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: messageContent,
-          sessionId: activeSessionId,
-          userId,
-          model,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.message) {
-          // Replace the loading message with the actual AI response
-           setMessages(prev => prev.map(msg => {
-            if(msg.pending){
-                return {
-                 ...data.message,
-                 displayedContent: data.message.content[0]?.text || '',
-                 pending: false,
-                 createdAt: Date.now(),
-               };
-            }
-            return msg;
-         }));
-      } else if (data.messages) {
-           // Replace any existing messages if receiving a full history
-           setMessages(data.messages.map((msg: Message) => ({
-               ...msg,
-                displayedContent: typeof msg.content[0] === 'object' ? msg.content[0] : '',
-                pending: false
-           })));
-       }
-    } catch (error) {
-      console.error('Error in message handling:', error);
-      setMessages(prev => [
-        ...prev.filter(msg => !msg.pending),
-        {...createErrorMessage(), pending: false, createdAt: Date.now() }
-      ]);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    inputMessage,
-    userId,
-    model,
-    sessionId,
-    currentSessionId,
-    selectedFiles,
-    router,
-    fetchChatHistories,
-    setCurrentSessionId,
-  ]);
-
-  // Session handling
-  const loadChatFromHistory = useCallback(async (id: string) => {
-    const historyData = await fetchChatHistory(id);
-    if (historyData) {
-      router.push(`/chat/${id}`);
-      setCurrentSessionId(id);
-      if (historyData.model) {
-        setIsInitialized(true);
-        setMessages(historyData.messages);
-        setModel(historyData.model);
         setIsModelLocked(true);
-      }
-    }
-  }, [fetchChatHistory, setMessages, setModel, setIsModelLocked, setCurrentSessionId, setIsInitialized, router]);
+        setIsSubmitting(true);
+        setInputMessage("");
+        setSelectedFiles([]);
 
-  const handleNewChat = useCallback(() => {
-    setMessages([]);
-    setCurrentSessionId(null);
-    setModel('gemini');
-    setIsModelLocked(false);
-    setIsInitialized(false);
-    router.push('/chat');
-  }, [setMessages, setCurrentSessionId, setModel, setIsModelLocked, setIsInitialized, router]);
+        let activeSessionId = currentSessionId;
 
-  return {
-    // State
-    messages,
-    inputMessage,
-    setInputMessage,
-    isSubmitting,
-    selectedFiles,
-    isInitialized,
-    currentSessionId,
-    model,
-    isModelLocked,
-    chatHistories,
+        if (!activeSessionId) {
+            // --- NEW SESSION CREATION USING SERVER ACTION ---
+            console.log("Creating new chat session...");
+            try {
+                const sessionResponse = await createNewChatSessionAction(userId); 
+                const newSessionId = sessionResponse.sessionId;
+                console.log("New session created. Session ID:", newSessionId); 
 
-    // Actions
-    handleFilesSelected,
-    handleRemoveFile,
-    handleSendMessage,
-    handleNewChat,
-    loadChatFromHistory,
-  };
+                activeSessionId = newSessionId;
+                setCurrentSessionId(newSessionId);
+                router.push(`/chat/${newSessionId}`);  
+                await fetchChatHistories(); 
+
+                const userMessage = createUserMessage(inputMessage);
+                const loadingMessage = createLoadingMessage();
+
+                setMessages((prev) => { // Log before setting messages - user and loading
+                    const updatedMessages = [
+                        ...prev, 
+                        { ...userMessage, pending: false, createdAt: Date.now() },
+                        { ...loadingMessage, pending: true, createdAt: Date.now() }];
+                    console.log("Setting messages (user+loading) in new session:", updatedMessages);
+                    return updatedMessages;
+                });
+
+                try {
+                    console.log("Sending message to AI..."); // Log before sendMessageAction call
+                    const aiResponse = await sendMessageAction({ // Call sendMessage Server Action
+                        content: inputMessage,
+                        sessionId: activeSessionId,
+                        userId,
+                        model
+                    });
+                    const aiMessage = aiResponse.message;
+                    console.log("AI Response received:", aiMessage); // Log AI message
+
+                    // Update messages state with AI response
+                    setMessages((prev) => {
+                        const updatedMessages = prev.map((msg) => {
+                            if (msg.pending) {
+                                const updatedMsg = {
+                                    ...aiMessage,
+                                    id: aiMessage.id, // Ensure ID is preserved
+                                    displayedContent: aiMessage.content[0]?.type || "",
+                                    pending: false,
+                                    createdAt: Date.now(),
+                                };
+                                console.log("Replacing pending message with AI response:", updatedMsg); // Log replacement
+                                return updatedMsg;
+                            }
+                            return msg;
+                        });
+                        console.log("Setting messages (AI response updated):", updatedMessages); // Log final messages state
+                        return updatedMessages;
+                    });
+
+
+                } catch (messageError) {
+                    console.error("Error in message handling (new session):", messageError);
+                    setMessages((prev) => [
+                        ...prev.filter((msg) => !msg.pending),
+                        { ...createErrorMessage(), pending: false, createdAt: Date.now() },
+                    ]);
+                } finally {
+                    setIsSubmitting(false);
+                    setIsModelLocked(false);
+                }
+                return; // Exit after new session flow
+
+
+            } catch (sessionError) {
+                console.error("Error creating new session:", sessionError);
+                return;
+            }
+        }
+
+
+        // --- EXISTING SESSION MESSAGE SENDING (using Server Action) ---
+        const userMessage = createUserMessage(inputMessage);
+        const loadingMessage = createLoadingMessage();
+
+        setMessages((prev) => { 
+            const updatedMessages = [
+                ...prev, 
+                { ...userMessage, pending: false, createdAt: Date.now() }, 
+                { ...loadingMessage, pending: true, createdAt: Date.now() }];
+
+            console.log("Setting messages (user+loading) in existing session:", updatedMessages);
+            return updatedMessages;
+        });
+
+
+        try {
+            console.log("Sending message to AI (existing session)..."); // Log before sendMessageAction call
+            const aiResponse = await sendMessageAction({ // Call sendMessage Server Action
+                content: inputMessage,
+                sessionId: activeSessionId,
+                userId,
+                model
+            });
+            const aiMessage = aiResponse.message;
+            console.log("AI Response received (existing session):", aiMessage); // Log AI message
+
+            // Update messages state with AI response
+            setMessages((prev) => {
+                const updatedMessages = prev.map((msg) => {
+                    if (msg.pending) {
+                        const updatedMsg = {
+                            ...aiMessage,
+                            id: aiMessage.id, // Ensure ID is preserved
+                            displayedContent: aiMessage.content[0]?.type || "",
+                            pending: false,
+                            createdAt: Date.now(),
+                        };
+                        console.log("Replacing pending message with AI response (existing session):", updatedMsg); // Log replacement
+                        return updatedMsg;
+                    }
+                    return msg;
+                });
+                console.log("Setting messages (AI response updated - existing session):", updatedMessages); // Log final messages state
+                return updatedMessages;
+            });
+
+
+        } catch (messageError) {
+            console.error("Error in message handling (existing session):", messageError);
+            setMessages((prev) => [
+                ...prev.filter((msg) => !msg.pending),
+                { ...createErrorMessage(), pending: false, createdAt: Date.now() },
+            ]);
+        } finally {
+            setIsSubmitting(false);
+            setIsModelLocked(false);
+        }
+
+
+    }, [
+        inputMessage,
+        userId,
+        model,
+        currentSessionId,
+        selectedFiles,
+        router,
+        fetchChatHistories,
+        processAndUploadFiles,
+        createUserMessage,
+        createLoadingMessage,
+        createErrorMessage,
+        setMessages,
+        setIsModelLocked
+    ]);
+
+
+    // --- handleNewChat (Modified & Combined from useChat & useChatSession actions) ---
+    const handleNewChat = useCallback(() => {
+        setMessages([]);
+        router.push("/chat");
+        setCurrentSessionId(null);
+        setModel("gemini");
+        setIsModelLocked(false);
+        setIsInitialized(false);
+    }, [setMessages, router, setCurrentSessionId, setModel, setIsModelLocked, setIsInitialized]);
+
+
+    // --- Session Edit/Delete Handlers ---
+    const handleEditChat = useCallback(
+        async (id: string, newTitle: string) => {
+            if (!userId) return;
+
+            try {
+                const response = await fetch('/api/chat-sessions', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, title: newTitle, userId }),
+                });
+                const data = await response.json();
+                if (!data.error) {
+                    setChatHistories((prev) =>
+                        prev.map((chat) =>
+                            chat.id === id ? { ...chat, title: newTitle } : chat
+                        )
+                    );
+                }
+            } catch (error) {
+                console.error('Error updating chat title:', error);
+            }
+        },
+        [userId, setChatHistories]
+    );
+
+    const handleDeleteChat = useCallback(
+        async (id: string) => {
+            if (!userId) return;
+            try {
+                const response = await fetch(`/api/chat-sessions/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId }),
+                });
+                if (response.ok) {
+                    setMessages([]);
+                    setCurrentSessionId(null);
+                    router.push('/chat');
+                    setChatHistories((prev) => prev.filter((chat) => chat.id !== id));
+                } else {
+                    console.error('Error deleting chat, server response not OK', response);
+                }
+            } catch (error) {
+                console.error('Error deleting chat:', error);
+            }
+        },
+        [userId, router, setChatHistories, setMessages, setCurrentSessionId]
+    );
+
+
+    return {
+        // --- States ---
+        messages,
+        inputMessage,
+        setInputMessage,
+        isSubmitting,
+        selectedFiles,
+        isInitialized,
+        currentSessionId,
+        model,
+        isModelLocked,
+        chatHistories,
+        userId,
+
+        // --- Actions ---
+        handleFilesSelected,
+        handleRemoveFile,
+        handleSendMessage,
+        handleNewChat,
+        loadChatFromHistory,
+        fetchChatHistories,
+        handleEditChat,
+        handleDeleteChat,
+        setCurrentSessionId,
+    };
 };

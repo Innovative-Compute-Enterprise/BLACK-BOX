@@ -12,6 +12,17 @@
   scrollbar-width: none; /* For Firefox */
 }
 
+.message-display-container { /* Or whatever class you use for the container */
+  height: 100%;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.hover-state {
+  /* Your hover styles here, e.g., */
+  background-color: #e0f2ff; /* Light blue background */
+}
+
 .title-font{
   font: 900;
   font-stretch: 125%;
@@ -20,6 +31,11 @@
 
 .max-z-index{
   z-index: 9999;
+}
+
+[data-virtuoso-scroller] {
+  scroll-behavior: auto;
+  overflow-anchor: none;
 }
 
 @layer utilities {

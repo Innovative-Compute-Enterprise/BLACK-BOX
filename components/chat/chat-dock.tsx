@@ -2,13 +2,13 @@
 "use client";
 import React, { useContext } from "react";
 import { ChatContext } from "@/context/ChatContext";
-import { useIsMobile } from "@/hooks/use-mobile"
 import TextInput from "../chat/dock/input";
 import SendButton from "../chat/dock/submit";
 import FileUploadButton from "../chat/dock/upload-button";
 import SelectedFilesDisplay from "../chat/dock/uploaded-files";
 import BlackBox from "../icons/BlackBox";
 import WebSearchButton from "./dock/web-search";
+import ModelSelector from "./ModelSelector";
 
 interface InputAreaProps {
   input: string;
@@ -19,6 +19,9 @@ interface InputAreaProps {
   selectedFiles: File[];
   hasMessages: boolean;
   onRemoveFile: (index: number) => void;
+  model: string;
+  setModel: (model: string) => void;
+  isModelLocked: boolean;
 }
 
 // Move canHandleFiles outside the component for performance
@@ -30,11 +33,7 @@ function canHandleFiles(modelName: string): boolean {
 // Extract a reusable wrapper for button groups
 const ButtonWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
-}) => (
-  <div className="shrink-0 flex items-center">
-    {children}
-  </div>
-);
+}) => <div className="shrink-0 flex items-center">{children}</div>;
 
 function ChatDock({
   input,
@@ -45,13 +44,15 @@ function ChatDock({
   selectedFiles,
   hasMessages,
   onRemoveFile,
+  model, 
+  setModel, 
+  isModelLocked 
 }: InputAreaProps) {
   const { model: contextModel } = useContext(ChatContext);
-  const isMobile = useIsMobile();
   const showFileButton = canHandleFiles(contextModel);
 
   const renderEmptyState = () => (
-    <div className="w-full h-[calc(100vh-3rem)] flex flex-col justify-center">
+    <div className="w-full h-screen flex flex-col justify-center">
       <div className="max-w-2xl mx-auto px-3 w-full -translate-y-16">
         {/* Empty State Message */}
         <div className="flex justify-center items-center mb-6">
@@ -59,7 +60,7 @@ function ChatDock({
         </div>
 
         {/* Conditional File Display for Mobile */}
-        {isMobile && selectedFiles.length > 0 && (
+        {selectedFiles.length > 0 && (
           <div className="mb-4">
             <SelectedFilesDisplay
               files={selectedFiles}
@@ -67,19 +68,35 @@ function ChatDock({
             />
           </div>
         )}
-        
-        <div className="flex flex-col dark:bg-[#0E0E0E]/60 bg-[#F1F1F1]/60 dark:border-[#ffffff]/10 border-black/10 border rounded-3xl py-1 px-2.5">
+
+        <div
+          className="
+          flex flex-col
+          dark:border-[#ffffff]/20 
+          border-black/20 
+          border 
+          rounded-3xl 
+          px-2
+          pt-1
+          pb-2
+          /* Multi-layered glow effect */
+          dark:shadow-[0_0_20px_rgba(255,255,255,0.11),0_0_5px_rgba(255,255,255,0.08)]
+          shadow-[0_0_20px_rgba(0,0,0,0.10),0_0_5px_rgba(0,0,0,0.05)]
+        "
+        >
           <div className="flex items-start">
             {/* Text Input */}
             <div className="flex-1 min-w-0">
               <TextInput
                 input={input}
                 setInput={setInput}
+                rows={2}
+                className="py-2 px-3 rounded-t-xl"
                 handleSendMessage={handleSendMessage}
               />
             </div>
           </div>
-          <div className="flex items-center justify-between w-full h-[44px]">
+          <div className="flex items-center justify-between w-full">
             {/* File Upload and Web Search Buttons Aligned to the Left */}
             <ButtonWrapper>
               {showFileButton && (
@@ -87,7 +104,7 @@ function ChatDock({
               )}
               <WebSearchButton />
             </ButtonWrapper>
-  
+
             {/* Send Button Positioned Independently */}
             <ButtonWrapper>
               <SendButton
@@ -102,11 +119,10 @@ function ChatDock({
       </div>
     </div>
   );
-  
 
   const renderRegularLayout = () => (
     <div className="w-full">
-      <div className="max-w-3xl mx-auto px-3 w-full relative">
+      <div className="max-w-3xl mx-auto px-3 pb-1.5 w-full relative">
         {/* Selected Files Display */}
         {selectedFiles.length > 0 && (
           <div className="mb-4">
@@ -116,18 +132,34 @@ function ChatDock({
             />
           </div>
         )}
-  
-        <div className="flex flex-col dark:bg-[#0E0E0E]/60 bg-[#F1F1F1]/60 dark:border-[#ffffff]/10 border-black/10 border border-b-0 pt-3 px-3 rounded-t-3xl">
+
+        <div
+          className="
+            flex 
+            flex-col
+          dark:border-[#ffffff]/20
+          border-black/20 
+            border 
+            p-1 
+            pb-1
+            rounded-3xl
+            /* Multi-layered glow effect */
+            dark:shadow-[0_0_20px_rgba(255,255,255,0.11),0_0_5px_rgba(255,255,255,0.08)]
+            shadow-[0_0_20px_rgba(0,0,0,0.10),0_0_5px_rgba(0,0,0,0.05)]
+            "
+        >
           <div className="flex items-start">
             <div className="flex-1 min-w-0">
               <TextInput
+                rows={1}
                 input={input}
                 setInput={setInput}
+                className="min-h-[44px] py-2 px-3 rounded-b-none rounded-t-xl"
                 handleSendMessage={handleSendMessage}
               />
             </div>
           </div>
-          <div className="flex items-center justify-between w-full pb-3 h-[44px]">
+          <div className="flex items-center justify-between w-full px-2 pb-2">
             {/* File Upload and Web Search Buttons Aligned to the Left */}
             <ButtonWrapper>
               {showFileButton && (
@@ -135,7 +167,7 @@ function ChatDock({
               )}
               <WebSearchButton />
             </ButtonWrapper>
-  
+
             {/* Send Button Positioned Independently */}
             <ButtonWrapper>
               <SendButton
@@ -148,9 +180,9 @@ function ChatDock({
           </div>
         </div>
       </div>
+      <p className="text-xs opacity-30 w-full text-center pb-1.5">AI-generated, for reference only</p>
     </div>
   );
-  
 
   return hasMessages ? renderRegularLayout() : renderEmptyState();
 }

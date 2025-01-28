@@ -1,10 +1,17 @@
 'use client';
-
 import React, { ChangeEvent, useEffect, useRef, useCallback, useState, memo } from 'react';
+
+declare global {
+  class ImageCapture {
+    constructor(track: MediaStreamTrack);
+    grabFrame(): Promise<ImageBitmap>;
+  }
+}
 
 const ACCEPTED_FILE_TYPES = {
   documents: {
     title: 'Documents',
+    
     extensions: '.pdf,.doc,.docx,.txt,.rtf,.odt',
     types: [
       'application/pdf',
@@ -48,28 +55,24 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
   maxFileSize = 10 * 1024 * 1024,
   onInputFocus
 }) => {
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const documentInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
   const [error, setError] = useState<string>('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isScreenCaptureMenuOpen, setIsScreenCaptureMenuOpen] = useState(false);
 
   const validateFile = useCallback((file: File): boolean => {
     if (file.size > maxFileSize) {
       setError(`File ${file.name} is too large. Max size is ${(maxFileSize / (1024 * 1024)).toFixed(2)}MB.`);
       return false;
     }
-
     const isValidType = Object.values(ACCEPTED_FILE_TYPES).some(category =>
       category.types.includes(file.type)
     );
-
     if (!isValidType) {
       setError(`File type ${file.type} is not supported.`);
       return false;
     }
-
     return true;
   }, [maxFileSize]);
 
@@ -87,133 +90,139 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
     }
   }, [validateFile, onFilesSelected]);
 
+  const handleScreenCapture = useCallback(async (mode: 'tab' | 'window' | 'screen') => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          displaySurface: mode
+        }
+      });
+      
+      const track = mediaStream.getVideoTracks()[0];
+      const imageCapture = new ImageCapture(track);
+      const bitmap = await imageCapture.grabFrame();
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const context = canvas.getContext('2d');
+      context?.drawImage(bitmap, 0, 0);
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `screenshot-${Date.now()}.png`, { type: 'image/png' });
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          onFilesSelected(dataTransfer.files);
+        }
+      }, 'image/png');
+
+      track.stop();
+      setIsScreenCaptureMenuOpen(false);
+      setIsExpanded(false);
+    } catch (err) {
+      console.error('Screen capture failed:', err);
+      setError('Screen capture failed. Please try again.');
+    }
+  }, [onFilesSelected]);
+
   const handleCameraClick = useCallback(() => {
-    setError('');
-    imageInputRef.current?.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.capture = 'environment';
+      fileInputRef.current.accept = ACCEPTED_FILE_TYPES.images.extensions;
+      fileInputRef.current.click();
+    }
   }, []);
 
-  const handleGalleryClick = useCallback(() => {
-    setError('');
-    imageInputRef.current?.click();
+  const handleCombinedFilesClick = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.capture = '';
+      fileInputRef.current.accept = Object.values(ACCEPTED_FILE_TYPES)
+        .map(category => category.extensions)
+        .join(',');
+      fileInputRef.current.click();
+    }
   }, []);
 
-  const handleDocumentClick = useCallback(() => {
-    setError('');
-    documentInputRef.current?.click();
+  const handleScreenCaptureClick = useCallback(() => {
+    setIsScreenCaptureMenuOpen(true);
   }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setIsScreenCaptureMenuOpen(false);
+      }
+      
       const target = event.target as Element;
       const isInput = target.matches('input:not([type="file"]), textarea');
       const isSubmitButton = target.matches('button[type="submit"]') ||
-                             target.closest('button[type="submit"]');
+                           target.closest('button[type="submit"]');
       if (isInput || isSubmitButton) {
         setIsExpanded(false);
       }
     };
 
-    if (isExpanded) {
+    if (isExpanded || isScreenCaptureMenuOpen) {
       document.addEventListener('click', handleClickOutside);
     }
+
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [isExpanded]);
-
-  useEffect(() => {
-    if (onInputFocus) {
-      const handleInputFocus = () => setIsExpanded(false);
-      document.addEventListener('focus', handleInputFocus, true);
-      return () => {
-        document.removeEventListener('focus', handleInputFocus, true);
-      };
-    }
-  }, [onInputFocus]);
+  }, [isExpanded, isScreenCaptureMenuOpen]);
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative ml-1" ref={containerRef}>
       <div className="flex items-center space-x-2">
         {!isExpanded ? (
           <button
             onClick={() => setIsExpanded(true)}
-            className="p-1 min-w-8 h-8 text-black dark:text-white rounded-2xl focus:outline-none dark:hover:bg-zinc-800 hover:bg-zinc-300"
+            className="p-1.5 cursor-pointer text-black dark:text-white rounded-lg rounded-bl-xl focus:outline-none dark:hover:bg-zinc-900 hover:bg-zinc-100"
             title="Add files"
             aria-label="Add files"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
-                 viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-[24px]">
+                 viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </button>
         ) : (
           <div className="flex items-center space-x-2 transition-all duration-200 ease-in-out">
+
             <button
-              onClick={handleCameraClick}
-              className="p-1 text-black min-w-8 h-8 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-2xl focus:outline-none"
-              title="Take Photo"
-              aria-label="Take Photo"
+              onClick={handleCombinedFilesClick}
+              className="p-1.5 text-black dark:text-white rounded-lg rounded-bl-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 focus:outline-none"
+              title="Screen Capture"
+              aria-label="Screen Capture"
             >
-              {/* Camera icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
-                   fill="currentColor" className="size-[24px]">
-                <path d="M12 9a3.75 3.75 0 1 0 0 7.5A3.75 3.75 0 0 0 12 9Z" />
-                <path fillRule="evenodd" d="M9.344 3.071a49.52 49.52 0 0 1 5.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 0 1-3 3h-15a3 3 0 0 1-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 0 0 1.11-.71l.822-1.315a2.942 2.942 0 0 1 2.332-1.39ZM6.75 12.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Zm12-1.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clipRule="evenodd" />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
+                   viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
               </svg>
             </button>
 
             <button
-              onClick={handleGalleryClick}
-              className="p-1 text-black min-w-8 h-8 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-2xl focus:outline-none"
-              title="Upload from Gallery"
+              onClick={() => handleScreenCapture('screen')}
+              className="p-1.5 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg focus:outline-none"
+              title="Upload Files"
+              aria-label="Upload Files"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-[24px]">
-                <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clipRule="evenodd" />
-              </svg>
-            </button>
-
-            <button
-              onClick={handleDocumentClick}
-              className="p-1 text-black min-w-8 h-8 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-2xl focus:outline-none"
-              title="Upload Document"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-[24px]">
-                <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
-                <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-              </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
+              <path d="M12 9a3.75 3.75 0 1 0 0 7.5A3.75 3.75 0 0 0 12 9Z" />
+              <path fill-rule="evenodd" d="M9.344 3.071a49.52 49.52 0 0 1 5.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 0 1-3 3h-15a3 3 0 0 1-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 0 0 1.11-.71l.822-1.315a2.942 2.942 0 0 1 2.332-1.39ZM6.75 12.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Zm12-1.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+            </svg>
             </button>
           </div>
         )}
       </div>
       
-      {error && (
-        <div 
-          className="absolute right-0 mb-1 p-2 text-sm text-red-500 bg-white dark:bg-black rounded-md shadow-lg ring-1 ring-red-500 z-50"
-          style={{ bottom: '100%' }}
-          role="alert"
-          aria-live="assertive"
-        >
-          {error}
-        </div>
-      )}
-
-      {/* Hidden file inputs */}
       <input
         type="file"
-        ref={imageInputRef}
+        ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
-        accept={ACCEPTED_FILE_TYPES.images.extensions}
-        multiple
-        aria-hidden="true"
-      />
-      
-      <input
-        type="file"
-        ref={documentInputRef}
-        onChange={handleFileChange}
-        className="hidden"
-        accept={`${ACCEPTED_FILE_TYPES.documents.extensions},${ACCEPTED_FILE_TYPES.spreadsheets.extensions}`}
+        accept={`${ACCEPTED_FILE_TYPES.images.extensions},${ACCEPTED_FILE_TYPES.documents.extensions},${ACCEPTED_FILE_TYPES.spreadsheets.extensions}`}
         multiple
         aria-hidden="true"
       />

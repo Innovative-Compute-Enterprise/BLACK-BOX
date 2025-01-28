@@ -1,7 +1,10 @@
 // app/chat/page.tsx
-import Chat from '@/components/chat/Chat';
+import { Chat } from '@/components/chat/Chat';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
+import Loading from './../../../components/chat/message/loading'; // Create a loading component
+
 
 export default async function ChatPage() {
   const supabase = createClient();
@@ -15,8 +18,8 @@ export default async function ChatPage() {
   }
 
   return (
-    <>
-      <Chat />
-    </>
+    <Suspense fallback={<Loading />}> {/* Add suspense for smoother loading */}
+        <Chat />
+    </Suspense>
   );
 }

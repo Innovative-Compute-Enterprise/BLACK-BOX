@@ -13,48 +13,57 @@ const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 interface ThemeContextProps {
     theme: Theme;
     setTheme: (theme: Theme) => void;
-    toggleTheme: () => void;
 }
 
+const isTheme = (value: string | null): value is Theme => {
+    return value !== null && Object.values(Theme).includes(value as Theme);
+};
+
+const applyThemeClasses = (theme: Theme) => {
+    document.documentElement.classList.remove(Theme.light, Theme.dark);
+    if (theme !== Theme.system) {
+        document.documentElement.classList.add(theme);
+    }
+};
+
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-    const [theme, setTheme] = useState<Theme>(() => {
+    const [theme, setThemeState] = useState<Theme>(() => {
         if (typeof window !== 'undefined') {
-            const savedTheme = localStorage.getItem('theme') as Theme;
-            if (savedTheme && savedTheme !== Theme.system) {
+            const savedTheme = localStorage.getItem('theme');
+            if (isTheme(savedTheme)) {
                 return savedTheme;
             }
             const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            return prefersDarkScheme ? Theme.dark : Theme.light;
+            if (prefersDarkScheme) return Theme.dark;
         }
         return Theme.light;
     });
 
-    useEffect(() => {
-        const applyTheme = (currentTheme: Theme) => {
-            if (currentTheme === Theme.system) {
-                const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                document.documentElement.classList.remove(Theme.light, Theme.dark);
-                document.documentElement.classList.add(prefersDarkScheme ? Theme.dark : Theme.light);
-            } else {
-                document.documentElement.classList.remove(Theme.light, Theme.dark);
-                document.documentElement.classList.add(currentTheme);
-            }
-        };
-
-        applyTheme(theme);
-
-        if (theme !== Theme.system) {
-            localStorage.setItem('theme', theme);
+    const setTheme = (newTheme: Theme) => {
+        setThemeState(newTheme);
+        if (newTheme === Theme.system) {
+            localStorage.removeItem('theme');
+        } else {
+            localStorage.setItem('theme', newTheme);
         }
-    }, [theme]);
+    }
 
     useEffect(() => {
+        applyThemeClasses(theme);
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
         const handleSystemThemeChange = (e: MediaQueryListEvent) => {
             if (theme === Theme.system) {
-                setTheme(e.matches ? Theme.dark : Theme.light);
+                const newTheme = e.matches ? Theme.dark : Theme.light;
+                applyThemeClasses(newTheme);
             }
         };
+
+        if (theme === Theme.system) {
+            const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const newTheme = prefersDarkScheme ? Theme.dark : Theme.light;
+            applyThemeClasses(newTheme);
+        }
 
         mediaQuery.addEventListener('change', handleSystemThemeChange);
         return () => {
@@ -62,13 +71,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         };
     }, [theme]);
 
-    const toggleTheme = () => {
-        const newTheme = theme === Theme.light ? Theme.dark : Theme.light;
-        setTheme(newTheme);
-    };
-
     return (
-        <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+        <ThemeContext.Provider value={{ theme, setTheme }}>
             {children}
         </ThemeContext.Provider>
     );

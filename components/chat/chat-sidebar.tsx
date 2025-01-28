@@ -21,8 +21,14 @@ import { Settings } from './sidebar/chat-settings';
 import { SubscriptionWithProduct } from '@/types/types';
 
 interface AppSidebarProps extends ChatHistoryProps {
-  subscription?: SubscriptionWithProduct | null;
-}
+    subscription?: SubscriptionWithProduct | null;
+    chatHistories: ChatHistory[];
+    currentSessionId: string | null;
+    fetchChatHistories?: () => Promise<void>;          // Optional refresh function, mark as optional
+    userId?: string | null;                             // Optional userId
+  }
+  
+
 
 const items = [
   {
@@ -86,21 +92,21 @@ export function AppSidebar({
   return (
     <>
       <Sidebar className="border-none">
-        <SidebarContent className="scrollbar-hide">
+        <SidebarContent className="scrollbar-hide px-1">
           <SidebarGroup>
-            <SidebarGroupLabel className="font-extrabold text-black dark:text-white flex items-center justify-between">
+            <SidebarGroupLabel className="font-[900] text-black dark:text-white flex items-center text-base justify-between">
               BLACK BOX
               <Badge variant="outline" className="text-xs">
                 {planName}
               </Badge>
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="mt-2">
+              <SidebarMenu className="mt-6">
                 {items.map((item) => (
-                  <SidebarMenuItem key={item.title} className="py-1">
-                    <SidebarMenuButton asChild>
+                  <SidebarMenuItem key={item.title}  className="py-1 hover:cursor-pointer">
+                    <SidebarMenuButton className='p-1.5' asChild>
                       <a
-                        href={item.url || '#'}
+                        href={item.url}
                         onClick={(e) => {
                           if (item.action) {
                             e.preventDefault();
@@ -108,7 +114,7 @@ export function AppSidebar({
                           }
                         }}
                       >
-                        <item.icon className="size-6 fill-black/10 backdrop-blur text-black dark:fill-white/10 dark:text-white" />
+                        <item.icon className="size-8 fill-black/10 backdrop-blur text-black dark:fill-white/10 dark:text-white" />
                         <span className='text-sm'>{item.title}</span>
                       </a>
                     </SidebarMenuButton>
@@ -118,7 +124,7 @@ export function AppSidebar({
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup>
+          <SidebarGroup className='mt-4'>
             <SidebarGroupContent>
               <ChatHistory
                 chatHistories={chatHistories}

@@ -68,7 +68,7 @@ export function ChatSearch({
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 z-10 backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 z-[50] backdrop-blur-sm">
       <div
         ref={modalRef}
         className="p-4 w-full max-w-lg dark:bg-[#0E0E0E] bg-[#F1F1F1] rounded-[20px] border dark:border-white/20 border-black/20"
@@ -84,7 +84,7 @@ export function ChatSearch({
                   onSelect={() => handleSelect(chat.id)}
                   className=" py-3"
                 >
-                  {chat.title || `Chat ${chat.id}`}
+                  {chat.title}
                 </CommandItem>
               ))}
             </CommandGroup>

@@ -87,7 +87,7 @@ const SelectedFilesDisplay: React.FC<SelectedFilesDisplayProps> = ({
     onRemoveFile,
 }) => {
     return (
-        <div className="flex flex-wrap gap-2 w-full">
+        <div className="flex flex-wrap gap-2 w-full bg-transparent">
             {files.map((file, index) => (
                 <div
                     key={index}

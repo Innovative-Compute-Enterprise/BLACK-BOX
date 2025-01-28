@@ -48,7 +48,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelL
   const selectedModelInfo = models.find((m) => m.id === selectedModel);
 
   return (
-    <div className="relative inline-block text-center w-full max-w-fit z-20">
+    <div className="relative inline-block text-center w-full max-w-fit z-20 ml-1.5">
       <Listbox
         value={selectedModel}
         onChange={handleModelChange} 
@@ -60,8 +60,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelL
           <>
             <ListboxButton
               className={clsx(
-                'relative w-full rounded-lg py-1 px-2.5 bg-[#0E0E0E]/15 dark:bg-[#F1F1F1]/15',
-                'text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-1',
+                'relative w-full rounded-md py-1 px-1.5',
+                'text-gray-700 dark:text-gray-200 dark:bg-[#0E0E0E] bg-[#F1F1F1] dark:border-[#ffffff]/30 border-black/30 border focus:outline-none focus:ring-1',
                 isModelLocked ? 'bg-gray-100 dark:bg-zinc-900 cursor-not-allowed' : 'cursor-pointer',
                 'flex justify-between items-center'
               )}
@@ -71,7 +71,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelL
 
             <ListboxOptions
               className={clsx(
-                'absolute mt-2 space-y-2 focus:outline-none w-[293px] rounded-xl text-left p-3 dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border backdrop-blur-lg',
+                'absolute mt-2 space-y-2 focus:outline-none w-[300px] rounded-xl text-left p-3 dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 dark:border-[#ffffff]/10 border-black/10 border backdrop-blur-lg',
                 'max-h-120 overflow-auto focus:outline-none',
                 isMobile ? 'left-1/2 -translate-x-1/2' : 'left-0'
               )}
@@ -83,14 +83,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelL
                 <ListboxOption
                   key={modelOption.id}
                   value={modelOption.id}
-                  className={({ active }) =>
+                  className={({ focus }) =>
                     clsx(
                       'select-none relative py-3 pl-3 pr-3 rounded-lg hover:dark:bg-[#2B2B2B] hover:bg-[#D4D4D4] cursor-pointer',
-                      active ? '' : 'text-black dark:text-white'
+                      focus ? '' : 'text-black dark:text-white'
                     )
                   }
                 >
-                  {({ selected, active }) => (
+                  {({ selected, focus }) => (
                     <div className=''>
                       <span className={clsx('block truncate text-sm font-semibold', selected ? 'underline' : '')}>
                         {modelOption.name}
@@ -98,7 +98,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ model, setModel, isModelL
                       <span
                         className={clsx(
                           'block text-xs text-gray-500 dark:text-gray-400 mt-1',
-                          active ? '' : ''
+                          focus ? '' : ''
                         )}
                       >
                         {modelOption.description}
