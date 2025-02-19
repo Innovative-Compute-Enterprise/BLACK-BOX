@@ -18,13 +18,14 @@ export default async function SignIn({
   params,
   searchParams
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   searchParams: { disable_button: boolean };
 }) {
-  const { id } = params;
+  // Await the params since it’s a promise.
+  const { id } = await params;
+
   const cookieStore = await cookies();
-  const preferredSignInView =
-    cookieStore.get('preferredSignInView')?.value || null;
+  const preferredSignInView = cookieStore.get('preferredSignInView')?.value || null;
   let viewProp: string = getDefaultSignInView(preferredSignInView);
 
   const viewTypes = getViewTypes();
@@ -40,7 +41,6 @@ export default async function SignIn({
   if (user && viewProp !== 'update_password') {
     return redirect('/');
   }
-
   if (!user && viewProp === 'update_password') {
     return redirect('/0auth');
   }
@@ -77,9 +77,7 @@ export default async function SignIn({
             {viewProp === 'update_password' && (
               <UpdatePassword redirectMethod={getRedirectMethod()} />
             )}
-            {viewProp === 'signup' && (
-              <Signup redirectMethod={getRedirectMethod()} />
-            )}
+            {viewProp === 'signup' && <Signup redirectMethod={getRedirectMethod()} />}
           </div>
         </div>
       </div>
