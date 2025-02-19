@@ -136,4 +136,6 @@ const MessageRow: React.FC<MessageRowProps> = React.memo(({
     );
 });
 
+MessageRow.displayName = 'MessageRow';
+
 export default React.memo(MessageRow);

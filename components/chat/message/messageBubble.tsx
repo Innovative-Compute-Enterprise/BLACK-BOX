@@ -115,7 +115,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ message }) => 
         td: ({ ...props }: any) => <td className="border border-gray-300 dark:border-gray-600 px-3 py-2" {...props} />,
 
         hr: ({ ...props }: any) => <hr className="my-6 border-gray-300 dark:border-gray-600" {...props} />,
-    }), [copied, copyToClipboard, formatFileSize, message.id]);
+    }), [copied, copyToClipboard, message.id]);
 
     const renderMessageContent = useMemo(() => {
         if (message.role === 'user') {
