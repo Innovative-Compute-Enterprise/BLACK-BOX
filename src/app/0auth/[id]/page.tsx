@@ -18,15 +18,14 @@ export default async function SignIn({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { disable_button: boolean };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ disable_button: boolean }>;
 }) {
-  // Remove "await" since params is now a plain object
-  const { id } = params;
+  const { id } = await params;
+  const { disable_button } = await searchParams;
 
   const cookieStore = await cookies();
-  const preferredSignInView =
-    cookieStore.get('preferredSignInView')?.value || null;
+  const preferredSignInView = cookieStore.get('preferredSignInView')?.value || null;
   let viewProp: string = getDefaultSignInView(preferredSignInView);
 
   const viewTypes = getViewTypes();
@@ -72,7 +71,7 @@ export default async function SignIn({
             {viewProp === 'forgot_password' && (
               <ForgotPassword
                 redirectMethod={getRedirectMethod()}
-                disableButton={searchParams.disable_button}
+                disableButton={disable_button}
               />
             )}
             {viewProp === 'update_password' && (
