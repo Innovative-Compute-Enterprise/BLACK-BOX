@@ -16,16 +16,17 @@ import Welcome from '@/components/ui/auth-components/Welcome';
 
 export default async function SignIn({
   params,
-  searchParams
+  searchParams,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
   searchParams: { disable_button: boolean };
 }) {
-  // Await the params since it’s a promise.
-  const { id } = await params;
+  // Remove "await" since params is now a plain object
+  const { id } = params;
 
   const cookieStore = await cookies();
-  const preferredSignInView = cookieStore.get('preferredSignInView')?.value || null;
+  const preferredSignInView =
+    cookieStore.get('preferredSignInView')?.value || null;
   let viewProp: string = getDefaultSignInView(preferredSignInView);
 
   const viewTypes = getViewTypes();
@@ -35,7 +36,7 @@ export default async function SignIn({
 
   const supabase = createClient();
   const {
-    data: { user }
+    data: { user },
   } = await supabase.auth.getUser();
 
   if (user && viewProp !== 'update_password') {
@@ -77,7 +78,9 @@ export default async function SignIn({
             {viewProp === 'update_password' && (
               <UpdatePassword redirectMethod={getRedirectMethod()} />
             )}
-            {viewProp === 'signup' && <Signup redirectMethod={getRedirectMethod()} />}
+            {viewProp === 'signup' && (
+              <Signup redirectMethod={getRedirectMethod()} />
+            )}
           </div>
         </div>
       </div>
