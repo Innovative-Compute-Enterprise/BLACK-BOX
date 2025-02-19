@@ -64,43 +64,56 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ message }) => 
     // Memoize Markdown style components
     const markdownStyleComponents = useMemo(() => ({
         h1: ({ ...props }: any) => <h1 className="text-3xl font-bold mt-6 mb-4 border-b pb-2" {...props} />,
+
         h2: ({ ...props }: any) => <h2 className="text-2xl font-bold mt-4 mb-3 border-b pb-2" {...props} />,
+
         h3: ({ ...props }: any) => <h3 className="text-xl font-semibold mt-3 mb-2" {...props} />,
+
         p: ({ ...props }: any) => <p className="my-3 text-base leading-loose tracking-wider" {...props} />,
+
         blockquote: ({ ...props }: any) => (
             <blockquote className="border-l-4 pl-4 italic text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md my-4 py-2" {...props} />
         ),
+
         ul: ({ ...props }: any) => <ul className="list-disc pl-6 my-2" {...props} />,
+
         ol: ({ ...props }: any) => <ol className="list-decimal pl-6 my-2" {...props} />,
+
         li: ({ ...props }: any) => <li className="my-2" {...props} />,
+
         a: ({ ...props }: any) => (
             <a className="text-blue-600 dark:text-blue-400 underline hover:no-underline" target="_blank" rel="noopener noreferrer" {...props} />
         ),
         img: ({ ...props }: any) => <Image className="max-w-full rounded-md my-4" src={props.src} alt={props.alt || ''} width={500} height={300} loading="lazy" />,
+        
         code: ({ node, inline, className, children, ...props }: any) => {
             const match = /language-(\w+)/.exec(className || '');
             const code = String(children).replace(/\n$/, '');
             return !inline && match ? (
-                <div className="relative group my-4 overflow-x-auto">
-                    <SyntaxHighlighter style={materialDark} language={match[1]} PreTag="div" showLineNumbers={true} wrapLines={true} className="rounded-md text-sm !p-4" {...props}>
+                <div className="relative group my-1 overflow-x-auto">
+                    <SyntaxHighlighter style={materialDark} language={match[1]} PreTag="div" wrapLines={true} className="rounded-md text-sm" {...props}>
                         {code}
                     </SyntaxHighlighter>
                     <button
-                        className="absolute top-2 right-2 bg-gray-200 dark:bg-gray-700 text-sm px-3 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        className="absolute top-2 right-2 bg-gray-200 dark:bg-gray-700 text-sm py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         onClick={() => copyToClipboard(code, message.id)}
                     >
                         {copied === message.id ? 'Copied!' : 'Copy'}
                     </button>
                 </div>
             ) : (
-                <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded-md text-sm" {...props}>
+                <code className="bg-gray-100 dark:bg-gray-800 rounded-md text-sm" {...props}>
                     {children}
                 </code>
             );
         },
+
         table: ({ ...props }: any) => <table className="w-full table-auto border-collapse my-4" {...props} />,
+
         th: ({ ...props }: any) => <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left bg-gray-200 dark:bg-gray-700" {...props} />,
+
         td: ({ ...props }: any) => <td className="border border-gray-300 dark:border-gray-600 px-3 py-2" {...props} />,
+
         hr: ({ ...props }: any) => <hr className="my-6 border-gray-300 dark:border-gray-600" {...props} />,
     }), [copied, copyToClipboard, formatFileSize, message.id]);
 
@@ -165,7 +178,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ message }) => 
     return (
         <div
             className={`transition-all duration-200 ease-in-out ${message.role === 'user'
-                ? 'bg-gray-200 dark:bg-zinc-800 rounded-2xl max-w-md px-3.5 py-2'
+                ? 'bg-gray-200 dark:bg-zinc-800 rounded-2xl max-w-md px-3.5 py-1.5 whitespace-pre-wrap leading-normal' 
                 : ''
                 }`}
         >

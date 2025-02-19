@@ -148,7 +148,7 @@ function ChatItem({
 
   return (
     <div
-      className={`group/chat relative flex items-center text-md justify-between w-full p-1.5 rounded-md my-1 ${
+      className={`group/chat relative flex items-center text-md justify-between w-full py-1.5 px-2 rounded-md my-1 ${
         isChatActive || hoveredChatId === chat.id
           ? "bg-gray-200 dark:bg-zinc-700"
           : "hover:bg-gray-200 dark:hover:bg-zinc-900"

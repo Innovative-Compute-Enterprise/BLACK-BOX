@@ -49,8 +49,11 @@ const upsertPriceRecord = async (
     unit_amount: price.unit_amount ?? null,
     interval: price.recurring?.interval ?? null,
     interval_count: price.recurring?.interval_count ?? null,
-    trial_period_days: price.recurring?.trial_period_days ?? TRIAL_PERIOD_DAYS
+    trial_period_days: price.recurring?.trial_period_days ?? TRIAL_PERIOD_DAYS,
+    description: price.nickname || '', // or any appropriate value for description
+    metadata: price.metadata || {}       // or an empty object if no metadata exists
   };
+  
 
   const { error: upsertError } = await supabaseAdmin
     .from('prices')

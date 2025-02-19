@@ -26,11 +26,11 @@ const MessageActions: React.FC<MessageActionsProps> = ({ message, copiedId, hand
   const messageText = getMessageText(message);
 
   return (
-    <div className="space-x-2">
+    <div className="pr-2">
       {message.role === 'assistant' && ( // Check if the message is from the assistant
         <CopyToClipboard text={messageText} onCopy={() => handleCopy(message.id)}>
           <button
-            className="rounded-lg p-1.5 transition-colors duration-200"
+            className="rounded-lg transition-colors duration-200"
             aria-label="Copy message"
           >
             {copiedId === message.id ? (

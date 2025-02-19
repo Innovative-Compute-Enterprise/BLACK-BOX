@@ -12,26 +12,30 @@ import ForgotPassword from '@/components/ui/auth-components/ForgotPassword';
 import PasswordLogin from '@/components/ui/auth-components/PasswordLogin';
 import Signup from '@/components/ui/auth-components/Signup';
 import UpdatePassword from '@/components/ui/auth-components/UpdatePassword';
-import Welcome from '@/components/ui/auth-components/Welcome'; 
+import Welcome from '@/components/ui/auth-components/Welcome';
 
 export default async function SignIn({
   params,
   searchParams
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   searchParams: { disable_button: boolean };
 }) {
   const { allowEmail } = getAuthTypes();
   const viewTypes = getViewTypes();
   const redirectMethod = getRedirectMethod();
 
-  let viewProp: string = getDefaultSignInView(null); 
+  let viewProp: string = getDefaultSignInView(null);
 
-  if (typeof params.id === 'string' && viewTypes.includes(params.id)) {
-    viewProp = params.id;
+  // Await the asynchronous params before accessing its properties.
+  const { id } = await params;
+  if (typeof id === 'string' && viewTypes.includes(id)) {
+    viewProp = id;
   } else {
+    // Await cookies() if it’s asynchronous
+    const cookieStore = await cookies();
     const preferredSignInView =
-      cookies().get('preferredSignInView')?.value || null;
+      cookieStore.get('preferredSignInView')?.value || null;
     viewProp = getDefaultSignInView(preferredSignInView);
   }
 
@@ -41,7 +45,7 @@ export default async function SignIn({
   } = await supabase.auth.getUser();
 
   if (user && viewProp !== 'update_password') {
-      return redirect('/');
+    return redirect('/');
   }
 
   if (!user && viewProp === 'update_password') {
@@ -55,15 +59,18 @@ export default async function SignIn({
       </div>
       <div className="flex flex-col justify-center items-center min-h-screen">
         <div className="flex flex-col justify-between m-auto max-w-lg w-[320px]">
-          <div title={viewProp === 'forgot_password' ? 'Reset Password' : viewProp === 'signup' ? 'Sign Up' : 'Sign In'}>
-            {viewProp === 'welcome' && (
-              <Welcome /> 
-            )}
+          <div
+            title={
+              viewProp === 'forgot_password'
+                ? 'Reset Password'
+                : viewProp === 'signup'
+                ? 'Sign Up'
+                : 'Sign In'
+            }
+          >
+            {viewProp === 'welcome' && <Welcome />}
             {viewProp === 'password_signin' && (
-              <PasswordLogin
-                allowEmail={allowEmail}
-                redirectMethod={redirectMethod}
-              />
+              <PasswordLogin allowEmail={allowEmail} redirectMethod={redirectMethod} />
             )}
             {viewProp === 'forgot_password' && (
               <ForgotPassword
@@ -74,9 +81,7 @@ export default async function SignIn({
             {viewProp === 'update_password' && (
               <UpdatePassword redirectMethod={redirectMethod} />
             )}
-            {viewProp === 'signup' && (
-              <Signup redirectMethod={redirectMethod} />
-            )}
+            {viewProp === 'signup' && <Signup redirectMethod={redirectMethod} />}
           </div>
         </div>
       </div>

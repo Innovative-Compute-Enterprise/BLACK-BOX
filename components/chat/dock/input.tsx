@@ -44,7 +44,6 @@ function TextInput({ input, setInput, handleSendMessage, className = "", rows }:
 
   const baseClassName = `
     w-full
-    placeholder:opacity-30
     dark:text-white 
     bg-white 
     dark:bg-black
@@ -54,8 +53,12 @@ function TextInput({ input, setInput, handleSendMessage, className = "", rows }:
     focus:ring-0 
     resize-none
     text-lg
+    font-normal
     h-full
+    text-base 
     overflow-y-auto
+    whitespace-pre-wrap
+    leading-normal
   `;
 
   return (
@@ -65,7 +68,7 @@ function TextInput({ input, setInput, handleSendMessage, className = "", rows }:
       onChange={handleInputChange}
       onKeyDown={handleKeyDown}
       rows={rows}
-      placeholder="Message Black Box"
+      placeholder="Pergunte qualquer coisa"
       className={`${baseClassName} ${className}`}
       aria-label="Message input"
     />

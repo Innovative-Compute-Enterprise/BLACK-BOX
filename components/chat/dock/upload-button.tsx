@@ -178,7 +178,7 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
         {!isExpanded ? (
           <button
             onClick={() => setIsExpanded(true)}
-            className="p-1.5 cursor-pointer text-black dark:text-white rounded-lg rounded-bl-xl focus:outline-none dark:hover:bg-zinc-900 hover:bg-zinc-100"
+            className="p-1 cursor-pointer text-black dark:text-white rounded-lg rounded-bl-xl focus:outline-none dark:hover:bg-zinc-900 hover:bg-zinc-100"
             title="Add files"
             aria-label="Add files"
           >
@@ -192,25 +192,25 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
 
             <button
               onClick={handleCombinedFilesClick}
-              className="p-1.5 text-black dark:text-white rounded-lg rounded-bl-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 focus:outline-none"
+              className="p-1 text-black dark:text-white rounded-lg rounded-bl-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 focus:outline-none"
               title="Screen Capture"
               aria-label="Screen Capture"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
-                   viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                   viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" />
               </svg>
             </button>
 
             <button
               onClick={() => handleScreenCapture('screen')}
-              className="p-1.5 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg focus:outline-none"
+              className="p-1 text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg focus:outline-none"
               title="Upload Files"
               aria-label="Upload Files"
             >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
               <path d="M12 9a3.75 3.75 0 1 0 0 7.5A3.75 3.75 0 0 0 12 9Z" />
-              <path fill-rule="evenodd" d="M9.344 3.071a49.52 49.52 0 0 1 5.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 0 1-3 3h-15a3 3 0 0 1-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 0 0 1.11-.71l.822-1.315a2.942 2.942 0 0 1 2.332-1.39ZM6.75 12.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Zm12-1.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+              <path fillRule="evenodd" d="M9.344 3.071a49.52 49.52 0 0 1 5.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 0 1-3 3h-15a3 3 0 0 1-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 0 0 1.11-.71l.822-1.315a2.942 2.942 0 0 1 2.332-1.39ZM6.75 12.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Zm12-1.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clipRule="evenodd" />
             </svg>
             </button>
           </div>

@@ -58,7 +58,7 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
 
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.0-flash-thinking-exp-01-21',
       systemInstruction: {
         parts: [
           {

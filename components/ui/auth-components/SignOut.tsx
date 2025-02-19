@@ -3,7 +3,7 @@
 
 import { SignOut } from '@/utils/auth-helpers/server';
 import Logout from '@/components/icons/LogOut';
-import { Tooltip } from "@nextui-org/tooltip";
+import { Tooltip } from "@heroui/tooltip";
 import Report from '@/components/icons/Report';
 import React from 'react';
 

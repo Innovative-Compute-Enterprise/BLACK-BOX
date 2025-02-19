@@ -18,7 +18,6 @@ export function ChatLayoutClient({
   sessionId,
   subscription,
 }: ChatLayoutClientProps) {
-  const { model } = useChatContext();
 
   const {
     userId,
@@ -38,9 +37,9 @@ export function ChatLayoutClient({
         currentSessionId={currentSessionId}
         onEditChat={handleEditChat}
         onDeleteChat={handleDeleteChat}
-        onChatSelection={loadChatFromHistory} // Use loadChatFromHistory directly
-        fetchChatHistories={fetchChatHistories} // Pass fetchChatHistories
-        userId={userId} // Pass userId if AppSidebar needs user info
+        onChatSelection={loadChatFromHistory}
+        fetchChatHistories={fetchChatHistories} 
+        userId={userId} 
       />
       {children}
     </>

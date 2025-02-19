@@ -1,9 +1,13 @@
+"use server"
+import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { Message } from '@/types/chat';
 import axios from 'axios';
 import crypto from 'crypto';
 import { ImageBlockParam, TextBlockParam } from '@anthropic-ai/sdk/resources';
 
+// Create the Anthropic client without browser options.
+// Since this file is in the app directory's API route, it runs on the server.
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
 });
@@ -35,10 +39,10 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
           return {
             role: msg.role === 'system' ? 'assistant' : msg.role,
             content: msg.content,
-          } as AnthropicMessageParam;
+          };
         } else if (Array.isArray(msg.content)) {
           const contentItems: (TextBlockParam | ImageBlockParam)[] = await Promise.all(
-            msg.content.map(async (item): Promise<TextBlockParam | ImageBlockParam> => {
+            msg.content.map(async (item) => {
               if (item.type === 'image_url') {
                 const dataUrl = await getImageDataUrl(item.image_url.url);
                 return {
@@ -56,7 +60,7 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
           return {
             role: msg.role === 'system' ? 'assistant' : msg.role,
             content: contentItems,
-          } as AnthropicMessageParam;
+          };
         }
         throw new Error('Invalid message content format');
       })
@@ -72,8 +76,8 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
       throw new Error('No content returned from the assistant.');
     }
 
-    // Extract text content, handling different block types
-   const assistantContent = response.content
+    // Extract text content from the response blocks
+    const assistantContent = response.content
       .filter((block): block is { type: 'text'; text: string } => block.type === 'text' && 'text' in block)
       .map(block => block.text)
       .join('');
@@ -88,5 +92,16 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
   } catch (error: any) {
     console.error('Error details:', error);
     throw new Error(`Failed to generate response using Claude: ${error.message}`);
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const { messages } = await request.json();
+    const result = await generateResponse(messages);
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('Error processing POST request:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

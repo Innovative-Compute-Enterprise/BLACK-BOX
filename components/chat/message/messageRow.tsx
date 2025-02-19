@@ -14,7 +14,6 @@ interface MessageRowProps {
     isLast: boolean;
 }
 
-const TYPING_SPEED = 3; // Not directly used, controlling speed via update frequency now
 const GRAPHEME_SPLITTER = new GraphemeSplitter();
 
 const MessageRow: React.FC<MessageRowProps> = React.memo(({
@@ -111,7 +110,7 @@ const MessageRow: React.FC<MessageRowProps> = React.memo(({
 
     return (
         <React.Fragment key={message.id}>
-            <div className={`mb-9 ${isUser ? 'justify-end' : 'justify-start'}`}>
+            <div className={` my-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
                 <div
                     className={` inline-block w-full max-w-screen ${isUser ? 'flex justify-end' : 'justify-start'
                         }`}

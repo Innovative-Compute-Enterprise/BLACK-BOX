@@ -12,7 +12,8 @@ interface ChatProps {
 }
 
 export function Chat({ sessionId }: ChatProps) {
-  const { model, setModel, isDrawerOpen, toggleDrawer, isModelLocked } = useChatContext(); 
+  
+  const { model, setModel, isModelLocked } = useChatContext(); 
   const {
     messages,
     inputMessage,
@@ -23,41 +24,32 @@ export function Chat({ sessionId }: ChatProps) {
     handleFilesSelected,
     handleRemoveFile,
     handleNewChat,
-    chatHistories, 
-    loadChatFromHistory, 
-    handleEditChat, 
-    handleDeleteChat,  
-    setCurrentSessionId, 
-    currentSessionId, 
-    fetchChatHistories, 
-    userId
-  } = useChat({ sessionId: sessionId || undefined }); 
+  } = useChat({ sessionId: sessionId }); 
 
   return (
     <div className="flex-1 flex flex-col relative">
       <ChatHeader
-        model={model}
-        setModel={setModel}
         handleNewChat={handleNewChat}
-        isModelLocked={isModelLocked}
       />
       
       <div className="flex-1 relative">
         <MessageDisplay messages={messages} />
       </div>
 
-      <div>
-        <ChatDock
+
+      <ChatDock
           input={inputMessage}
           setInput={setInputMessage}
           handleSendMessage={handleSendMessage}
-          isSubmitting={isSubmitting || !userId}
+          isSubmitting={isSubmitting}
           onFilesSelected={handleFilesSelected}
           selectedFiles={selectedFiles}
           onRemoveFile={handleRemoveFile}
-          hasMessages={messages.length > 0}
+          hasMessages={ !!sessionId || messages.length > 0 || isSubmitting } 
+          model={model}
+          setModel={setModel}
+          isModelLocked={isModelLocked}
         />
-      </div>
     </div>
   );
 }

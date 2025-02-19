@@ -2,7 +2,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { stripe } from '@/utils/stripe/config';
 import { getURL, getErrorRedirect, getStatusRedirect } from '@/utils/helpers';
 
 function isValidEmail(email: string) {
@@ -77,7 +76,7 @@ export async function requestPasswordUpdate(formData: FormData) {
 }
 
 export async function signInWithPassword(formData: FormData) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const email = String(formData.get('email')).trim();
   const password = String(formData.get('password')).trim();
   let redirectPath: string;
@@ -95,6 +94,7 @@ export async function signInWithPassword(formData: FormData) {
       error.message
     );
   } else if (data.user) {
+    // FIX: Now cookieStore is the actual cookie store object, so set() works
     cookieStore.set('preferredSignInView', 'password_signin', { path: '/' });
     redirectPath = getStatusRedirect('/', 'Success!', 'You are now signed in.');
   } else {
@@ -109,13 +109,18 @@ export async function signInWithPassword(formData: FormData) {
 }
 
 async function isEmailInUse(email: string): Promise<boolean> {
-  const supabase = createClient();  
-  const { data } = await supabase
-    .from('users')  
-    .select('email')
-    .eq('email', email)
-    .single();
-  return data !== null;  
+  const supabase = createClient();
+  try {
+    const { data } = await supabase
+      .from('users')
+      .select('email') 
+      .eq('email', email)
+      .limit(1); 
+    return data !== null && data.length > 0; 
+  } catch (error) {
+    console.error("Error in isEmailInUse (simplified query):", error);
+    return false;
+  }
 }
 
 export async function signUp(formData: FormData) {
@@ -123,7 +128,7 @@ export async function signUp(formData: FormData) {
 
   const email = String(formData.get('email')).trim();
   const password = String(formData.get('password')).trim();
-  
+
   let redirectPath: string;
 
   // First, check if the email is valid
@@ -149,7 +154,6 @@ export async function signUp(formData: FormData) {
     }
   });
 
-  // Check for specific error related to email already in use
   if (error) {
     let errorMessage = 'Sign up failed.';
     if (error.message.toLowerCase().includes('already in use')) {
@@ -285,53 +289,5 @@ export async function updateName(formData: FormData): Promise<string> {
     throw new Error('Failed to update user in database');
   }
 
-  return fullName; 
-}
-
-export async function prepareAccountDeletion(userId: string, stripeCustomerId: string, shouldSoftDelete = false) {
-  
-  const supabase = createClient();
-  try {
-    // Check for active subscriptions
-    const subscriptions = await stripe.subscriptions.list({
-      customer: stripeCustomerId,
-      status: 'active',
-    });
-
-    // If active subscriptions exist, do not allow deletion, suggest cancellation first
-    if (subscriptions.data.length > 0) {
-      return {
-        status: 'pending',
-        message: 'Active subscriptions detected. Please cancel all subscriptions before deleting the account.',
-      };
-    }
-
-    // Perform deletion based on shouldSoftDelete parameter
-    const deletionResponse = shouldSoftDelete ?
-      await supabase.from('auth.users').update({ deleted_at: new Date().toISOString(), enabled: false }).eq('id', userId) :
-      await supabase.auth.admin.deleteUser(userId);
-
-    if (deletionResponse.error) {
-      throw new Error('Failed to delete user account: ' + deletionResponse.error.message);
-    }
-
-    return {
-      status: 'success',
-      message: 'Your account has been ' + (shouldSoftDelete ? 'soft-deleted. You can restore your account within 30 days.' : 'permanently deleted.'),
-    };
-  } catch (error: unknown) { // Properly handle unknown type
-    if (error instanceof Error) {
-      console.error(`Error during account deletion preparation: ${error.message}`);
-      return {
-        status: 'error',
-        message: `An error occurred during account deletion preparation: ${error.message}`
-      };
-    } else {
-      console.error('Error during account deletion preparation: An unknown error occurred.');
-      return {
-        status: 'error',
-        message: 'An unknown error occurred during account deletion preparation.'
-      };
-    }
-  }  
+  return fullName;
 }

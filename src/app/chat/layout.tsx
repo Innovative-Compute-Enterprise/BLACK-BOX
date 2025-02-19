@@ -15,7 +15,8 @@ export default async function ChatLayout({
   children,
   params,
 }: ChatLayoutProps) {
-  const cookieStore = cookies();
+  // FIX: Await the cookies() function
+  const cookieStore = await cookies();
   const defaultOpen = cookieStore.get('sidebar:state')?.value === 'false';
 
   const supabase = createClient();

@@ -1,10 +1,13 @@
 // server.ts
+'use server';
 
 import { Message, ChatHistory, MessageContent } from '@/types/chat';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { getModelHandler } from './llms';
-import { generateChatTitle } from './llms'; 
+import { cortex } from '@/lib/ai/cortex';
+import { generateChatTitle } from '@/lib/ai/cortex.server';
 import { randomUUID } from 'crypto';
+
+const chatCortex = cortex();
 
 // create SessionId
 export async function handleSessionId({
@@ -74,14 +77,15 @@ export async function handlePost({
     thread.push({ id: randomUUID(), role: 'user', content });
 
     // Obtenha o manipulador para o modelo selecionado
-    const modelHandler = getModelHandler(selectedModel);
+    const modelHandler = chatCortex.getModelHandler(selectedModel); // USE CORTEX
     if (!modelHandler) {
       console.error('No handler for model:', selectedModel);
       throw new Error(`Unsupported model: ${selectedModel}`);
     }
+    const systemPrompt = chatCortex.getSystemPrompt({ selectedChatModel: selectedModel });
 
     // Gere a resposta do assistente
-    const assistantMessage = await modelHandler(thread);
+    const assistantMessage = await modelHandler(thread, systemPrompt); // USE CORTEX
     thread.push(assistantMessage);
 
     // Se não houver chatData, significa que esta é a primeira mensagem, então insere um novo chat
@@ -100,7 +104,8 @@ export async function handlePost({
             messages: thread,
             model: selectedModel,
           },
-        ]);
+        ])
+        .select();
 
       if (insertError) {
         console.error('Error inserting new chat:', insertError.message);

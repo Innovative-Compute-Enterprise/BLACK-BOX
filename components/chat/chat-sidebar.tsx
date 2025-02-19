@@ -24,8 +24,8 @@ interface AppSidebarProps extends ChatHistoryProps {
     subscription?: SubscriptionWithProduct | null;
     chatHistories: ChatHistory[];
     currentSessionId: string | null;
-    fetchChatHistories?: () => Promise<void>;          // Optional refresh function, mark as optional
-    userId?: string | null;                             // Optional userId
+    fetchChatHistories?: () => Promise<void>;  
+    userId?: string | null;                          
   }
   
 
@@ -115,7 +115,7 @@ export function AppSidebar({
                         }}
                       >
                         <item.icon className="size-8 fill-black/10 backdrop-blur text-black dark:fill-white/10 dark:text-white" />
-                        <span className='text-sm'>{item.title}</span>
+                        <span className='text-sm font-semibold ml-2'>{item.title}</span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -124,7 +124,7 @@ export function AppSidebar({
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup className='mt-4'>
+          <SidebarGroup className='mt-6'>
             <SidebarGroupContent>
               <ChatHistory
                 chatHistories={chatHistories}

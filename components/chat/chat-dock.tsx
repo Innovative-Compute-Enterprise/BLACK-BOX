@@ -1,14 +1,13 @@
-// ChatDock.tsx
 "use client";
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { ChatContext } from "@/context/ChatContext";
+import ModelSelector from "@/components/chat/ModelSelector";
 import TextInput from "../chat/dock/input";
 import SendButton from "../chat/dock/submit";
 import FileUploadButton from "../chat/dock/upload-button";
 import SelectedFilesDisplay from "../chat/dock/uploaded-files";
-import BlackBox from "../icons/BlackBox";
 import WebSearchButton from "./dock/web-search";
-import ModelSelector from "./ModelSelector";
+import { cortex } from '@/lib/ai/cortex';
 
 interface InputAreaProps {
   input: string;
@@ -24,16 +23,9 @@ interface InputAreaProps {
   isModelLocked: boolean;
 }
 
-// Move canHandleFiles outside the component for performance
-const modelsThatSupportFiles = ["gpt-4o-mini", "gemini"];
-function canHandleFiles(modelName: string): boolean {
-  return modelsThatSupportFiles.includes(modelName.toLowerCase());
-}
-
-// Extract a reusable wrapper for button groups
-const ButtonWrapper: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => <div className="shrink-0 flex items-center">{children}</div>;
+const ButtonWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="shrink-0 flex items-center">{children}</div>
+);
 
 function ChatDock({
   input,
@@ -44,28 +36,23 @@ function ChatDock({
   selectedFiles,
   hasMessages,
   onRemoveFile,
-  model, 
-  setModel, 
-  isModelLocked 
+  model,
+  setModel,
+  isModelLocked,
 }: InputAreaProps) {
   const { model: contextModel } = useContext(ChatContext);
-  const showFileButton = canHandleFiles(contextModel);
+  const cortexLib = cortex();
+  // Use cortex's canHandleFiles instead of the hardcoded list
+  const [isWebSearchActive, setIsWebSearchActive] = useState<boolean>(false);
+
+  const showFileButton = cortexLib.canHandleFiles(contextModel);
 
   const renderEmptyState = () => (
-    <div className="w-full h-screen flex flex-col justify-center">
-      <div className="max-w-2xl mx-auto px-3 w-full -translate-y-16">
-        {/* Empty State Message */}
-        <div className="flex justify-center items-center mb-6">
-          <BlackBox className="size-12" />
-        </div>
-
-        {/* Conditional File Display for Mobile */}
+    <div className="w-full h-full flex flex-col justify-center items-center absolute top-0 left-0">
+      <div className="max-w-2xl mx-auto px-3 w-full">
         {selectedFiles.length > 0 && (
           <div className="mb-4">
-            <SelectedFilesDisplay
-              files={selectedFiles}
-              onRemoveFile={onRemoveFile}
-            />
+            <SelectedFilesDisplay files={selectedFiles} onRemoveFile={onRemoveFile} />
           </div>
         )}
 
@@ -76,16 +63,16 @@ function ChatDock({
           border-black/20 
           border 
           rounded-3xl 
+          bg-white 
+          dark:bg-black
           px-2
           pt-1
           pb-2
-          /* Multi-layered glow effect */
           dark:shadow-[0_0_20px_rgba(255,255,255,0.11),0_0_5px_rgba(255,255,255,0.08)]
           shadow-[0_0_20px_rgba(0,0,0,0.10),0_0_5px_rgba(0,0,0,0.05)]
         "
         >
           <div className="flex items-start">
-            {/* Text Input */}
             <div className="flex-1 min-w-0">
               <TextInput
                 input={input}
@@ -97,21 +84,20 @@ function ChatDock({
             </div>
           </div>
           <div className="flex items-center justify-between w-full">
-            {/* File Upload and Web Search Buttons Aligned to the Left */}
             <ButtonWrapper>
-              {showFileButton && (
-                <FileUploadButton onFilesSelected={onFilesSelected} />
-              )}
-              <WebSearchButton />
+              {showFileButton && <FileUploadButton onFilesSelected={onFilesSelected} />}
+              <WebSearchButton toggleWebSearch={(active) => setIsWebSearchActive(active)} />
+              <ModelSelector
+                model={model}
+                setModel={setModel}
+                isModelLocked={isModelLocked}
+              />
             </ButtonWrapper>
 
-            {/* Send Button Positioned Independently */}
             <ButtonWrapper>
               <SendButton
                 onClick={handleSendMessage}
-                disabled={
-                  isSubmitting || (!input.trim() && selectedFiles.length === 0)
-                }
+                disabled={isSubmitting || (!input.trim() && selectedFiles.length === 0)}
               />
             </ButtonWrapper>
           </div>
@@ -121,15 +107,11 @@ function ChatDock({
   );
 
   const renderRegularLayout = () => (
-    <div className="w-full">
+    <div className="w-full dark:bg-black bg-white sticky bottom-0">
       <div className="max-w-3xl mx-auto px-3 pb-1.5 w-full relative">
-        {/* Selected Files Display */}
         {selectedFiles.length > 0 && (
           <div className="mb-4">
-            <SelectedFilesDisplay
-              files={selectedFiles}
-              onRemoveFile={onRemoveFile}
-            />
+            <SelectedFilesDisplay files={selectedFiles} onRemoveFile={onRemoveFile} />
           </div>
         )}
 
@@ -137,13 +119,14 @@ function ChatDock({
           className="
             flex 
             flex-col
-          dark:border-[#ffffff]/20
-          border-black/20 
+            dark:border-[#ffffff]/20
+            border-black/20 
             border 
+            bg-white 
+            dark:bg-black
             p-1 
-            pb-1
+            pb-2
             rounded-3xl
-            /* Multi-layered glow effect */
             dark:shadow-[0_0_20px_rgba(255,255,255,0.11),0_0_5px_rgba(255,255,255,0.08)]
             shadow-[0_0_20px_rgba(0,0,0,0.10),0_0_5px_rgba(0,0,0,0.05)]
             "
@@ -159,28 +142,28 @@ function ChatDock({
               />
             </div>
           </div>
-          <div className="flex items-center justify-between w-full px-2 pb-2">
-            {/* File Upload and Web Search Buttons Aligned to the Left */}
+          <div className="flex items-center justify-between w-full px-2 py-1">
             <ButtonWrapper>
-              {showFileButton && (
-                <FileUploadButton onFilesSelected={onFilesSelected} />
-              )}
-              <WebSearchButton />
+              {showFileButton && <FileUploadButton onFilesSelected={onFilesSelected} />}
+              <WebSearchButton toggleWebSearch={(active) => setIsWebSearchActive(active)} />
+              <ModelSelector
+                model={model}
+                setModel={setModel}
+                isModelLocked={isModelLocked}
+              />
             </ButtonWrapper>
-
-            {/* Send Button Positioned Independently */}
             <ButtonWrapper>
               <SendButton
                 onClick={handleSendMessage}
-                disabled={
-                  isSubmitting || (!input.trim() && selectedFiles.length === 0)
-                }
+                disabled={isSubmitting || (!input.trim() && selectedFiles.length === 0)}
               />
             </ButtonWrapper>
           </div>
         </div>
       </div>
-      <p className="text-xs opacity-30 w-full text-center pb-1.5">AI-generated, for reference only</p>
+      <p className="text-xs opacity-30 w-full text-center pb-1.5">
+        Gerado por IA, apenas para referência
+      </p>
     </div>
   );
 

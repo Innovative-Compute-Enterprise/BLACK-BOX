@@ -16,7 +16,7 @@ const LoadingSpinner: React.FC<{
     <div 
       role="status" 
       aria-live="polite"
-      className={`flex items-center justify-center ${className}`}
+      className={`absolute w-full h-full ${className}`}
     >
       <svg 
         className={`relative ${sizeMap[size]} ${

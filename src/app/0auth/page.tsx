@@ -2,9 +2,10 @@ import { redirect } from 'next/navigation';
 import { getDefaultSignInView } from '@/utils/auth-helpers/settings';
 import { cookies } from 'next/headers';
 
-export default function SignIn() {
-  const preferredSignInView =
-    cookies().get('preferredSignInView')?.value || null;
+export default async function SignIn() {
+  // Get the cookie store (no need to call the result as a function)
+  const cookieStore = await cookies();
+  const preferredSignInView = cookieStore.get('preferredSignInView')?.value || null;
   const defaultView = getDefaultSignInView(preferredSignInView);
 
   return redirect(`/0auth/${defaultView}`);

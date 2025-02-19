@@ -21,7 +21,7 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "16rem"
+const SIDEBAR_WIDTH = "15rem"
 const SIDEBAR_WIDTH_MOBILE = "19rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
@@ -271,7 +271,7 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       size="default"
       variant="ghost"
-      className={cn("p-1.5 relative hover:bg-zinc-100 rounded-lg cursor-pointer dark:hover:bg-zinc-900")}
+      className={cn("p-1 relative hover:bg-zinc-100 rounded-lg cursor-pointer dark:hover:bg-zinc-900")}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
@@ -280,8 +280,8 @@ const SidebarTrigger = React.forwardRef<
     >
       {/* Adjust the SVG size explicitly */}
       <PanelLeft
-        className="fill-black/10 backdrop-blur text-black dark:fill-white/10 dark:text-white"
-        style={{ width: "18px", height: "18px" }} // Increase SVG size
+        className="fill-white text-black dark:fill-black dark:text-white"
+        style={{ width: "20px", height: "20px" }} // Increase SVG size
       />
       <span className="sr-only">Toggle Sidebar</span>
     </button>
