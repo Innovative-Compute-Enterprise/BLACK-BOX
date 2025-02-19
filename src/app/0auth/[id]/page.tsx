@@ -18,25 +18,18 @@ export default async function SignIn({
   params,
   searchParams
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
   searchParams: { disable_button: boolean };
 }) {
-  const { allowEmail } = getAuthTypes();
+  const { id } = params;
+  const cookieStore = await cookies();
+  const preferredSignInView =
+    cookieStore.get('preferredSignInView')?.value || null;
+  let viewProp: string = getDefaultSignInView(preferredSignInView);
+
   const viewTypes = getViewTypes();
-  const redirectMethod = getRedirectMethod();
-
-  let viewProp: string = getDefaultSignInView(null);
-
-  // Await the asynchronous params before accessing its properties.
-  const { id } = await params;
   if (typeof id === 'string' && viewTypes.includes(id)) {
     viewProp = id;
-  } else {
-    // Await cookies() if it’s asynchronous
-    const cookieStore = await cookies();
-    const preferredSignInView =
-      cookieStore.get('preferredSignInView')?.value || null;
-    viewProp = getDefaultSignInView(preferredSignInView);
   }
 
   const supabase = createClient();
@@ -55,7 +48,7 @@ export default async function SignIn({
   return (
     <section>
       <div className="absolute top-16 left-1/2 transform -translate-x-1/2">
-        <BlackBox className='w-[48px] h-[48px]' />
+        <BlackBox className="w-[48px] h-[48px]" />
       </div>
       <div className="flex flex-col justify-center items-center min-h-screen">
         <div className="flex flex-col justify-between m-auto max-w-lg w-[320px]">
@@ -70,18 +63,23 @@ export default async function SignIn({
           >
             {viewProp === 'welcome' && <Welcome />}
             {viewProp === 'password_signin' && (
-              <PasswordLogin allowEmail={allowEmail} redirectMethod={redirectMethod} />
+              <PasswordLogin
+                allowEmail={getAuthTypes().allowEmail}
+                redirectMethod={getRedirectMethod()}
+              />
             )}
             {viewProp === 'forgot_password' && (
               <ForgotPassword
-                redirectMethod={redirectMethod}
+                redirectMethod={getRedirectMethod()}
                 disableButton={searchParams.disable_button}
               />
             )}
             {viewProp === 'update_password' && (
-              <UpdatePassword redirectMethod={redirectMethod} />
+              <UpdatePassword redirectMethod={getRedirectMethod()} />
             )}
-            {viewProp === 'signup' && <Signup redirectMethod={redirectMethod} />}
+            {viewProp === 'signup' && (
+              <Signup redirectMethod={getRedirectMethod()} />
+            )}
           </div>
         </div>
       </div>

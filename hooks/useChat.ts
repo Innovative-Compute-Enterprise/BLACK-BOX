@@ -125,11 +125,11 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
       const historyData = await fetchChatHistory(id);
       if (historyData) {
         setMessages(historyData.messages);
+        setCurrentSessionId(id); 
+        router.push(`/chat/${id}`); 
       } else {
         setMessages([]); // Clear messages if history fetch fails or is empty
       }
-      setCurrentSessionId(id); // Update currentSessionId in state
-      router.push(`/chat/${id}`); // Navigate to the sessioned route
     },
     [fetchChatHistory, setMessages, router, setCurrentSessionId]
   );
