@@ -1,20 +1,7 @@
+// src/lib/ai/generateResponse.ts
 import { Message, MessageContent } from '@/types/chat';
 import axios from 'axios';
 import crypto from 'crypto';
-
-async function getImageDataUrl(imageUrl: string): Promise<string> {
-  try {
-    const response = await axios.get(imageUrl, {
-      responseType: 'arraybuffer',
-    });
-    const contentType = response.headers['content-type'];
-    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
-    return `data:${contentType};base64,${base64Image}`;
-  } catch (error) {
-    console.error('Error fetching image:', error.message);
-    throw new Error('Failed to fetch and convert image to base64.');
-  }
-}
 
 export async function generateResponse(messages: Message[]): Promise<Message> {
   console.log(messages);
@@ -39,7 +26,6 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
               }
             })
           );
-
           return {
             role: msg.role,
             content: contentItems,
@@ -98,5 +84,19 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
       console.error('Error:', error.message);
     }
     throw new Error('Failed to generate response using GPT-4.');
+  }
+}
+
+async function getImageDataUrl(imageUrl: string): Promise<string> {
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+    });
+    const contentType = response.headers['content-type'];
+    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
+    return `data:${contentType};base64,${base64Image}`;
+  } catch (error: any) {
+    console.error('Error fetching image:', error.message);
+    throw new Error('Failed to fetch and convert image to base64.');
   }
 }
