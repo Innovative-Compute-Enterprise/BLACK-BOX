@@ -1,38 +1,42 @@
-// src/lib/ai/generateResponse.ts
-import { Message, MessageContent } from '@/types/chat';
+// src/lib/ai/chatGPT.ts
+import { Message, MessageContent } from '@/types/chat'; // Adjust the path as needed
 import axios from 'axios';
 import crypto from 'crypto';
 
-export async function generateResponse(messages: Message[]): Promise<Message> {
-  console.log(messages);
+async function getImageDataUrl(imageUrl: string): Promise<string> {
   try {
-    // Prepare the messages in the format expected by the OpenAI API
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+    });
+    const contentType = response.headers['content-type'];
+    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
+    return `data:${contentType};base64,${base64Image}`;
+  } catch (error) {
+    console.error('Error fetching image:', error.message);
+    throw new Error('Failed to fetch and convert image to base64.');
+  }
+}
+
+export async function generateResponse(messages: Message[]): Promise<Message> {
+  try {
     const formattedMessages = await Promise.all(
       messages.map(async (msg) => {
         if (Array.isArray(msg.content)) {
-          // Convert image URLs to base64 data URLs
           const contentItems = await Promise.all(
             msg.content.map(async (item) => {
               if (item.type === 'image_url') {
                 const dataUrl = await getImageDataUrl(item.image_url.url);
                 return {
                   type: 'image_url',
-                  image_url: {
-                    url: dataUrl,
-                  },
+                  image_url: { url: dataUrl },
                 };
-              } else {
-                return item;
               }
+              return item;
             })
           );
-          return {
-            role: msg.role,
-            content: contentItems,
-          };
-        } else {
-          throw new Error('message.content should be an array of MessageContent');
+          return { role: msg.role, content: contentItems };
         }
+        throw new Error('message.content should be an array of MessageContent');
       })
     );
 
@@ -57,9 +61,7 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
       throw new Error('No content returned from the assistant.');
     }
 
-    // Handle the assistant's response
     let contentArray: MessageContent[];
-
     if (Array.isArray(assistantContent)) {
       contentArray = assistantContent;
     } else if (typeof assistantContent === 'string') {
@@ -84,19 +86,5 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
       console.error('Error:', error.message);
     }
     throw new Error('Failed to generate response using GPT-4.');
-  }
-}
-
-async function getImageDataUrl(imageUrl: string): Promise<string> {
-  try {
-    const response = await axios.get(imageUrl, {
-      responseType: 'arraybuffer',
-    });
-    const contentType = response.headers['content-type'];
-    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
-    return `data:${contentType};base64,${base64Image}`;
-  } catch (error: any) {
-    console.error('Error fetching image:', error.message);
-    throw new Error('Failed to fetch and convert image to base64.');
   }
 }
