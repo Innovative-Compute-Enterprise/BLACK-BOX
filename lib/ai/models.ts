@@ -1,8 +1,8 @@
 // src/lib/models.ts
 import { AIModelConfig, ModelHandler } from './cortex';
 import { generateResponse as generateGPT4MINI } from '@/lib/ai/response/chatGPT/generateResponse';
-import { generateResponse as generateGEMINI } from '@/src/app/api/ai/gemini/route'; 
-import { generateResponse as generateSONNET3 } from '@/src/app/api/ai/claude/route'; 
+import { generateResponse as generateGEMINI } from '@/lib/ai/response/gemini/generateResponse'; 
+import { generateResponse as generateSONNET3 } from '@/lib/ai/response/claude/generateResponse'; 
 import { getSystemPrompt } from './prompts'; 
 
 export const modelsConfig: AIModelConfig[] = [
