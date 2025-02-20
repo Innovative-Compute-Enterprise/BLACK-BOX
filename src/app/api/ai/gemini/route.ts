@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { Message, MessageContent } from '@/types/chat';
 import crypto from 'crypto';
 import axios from 'axios';
@@ -103,5 +104,19 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
   } catch (error: any) {
     console.error('Error:', error.message);
     throw new Error('Failed to generate response using Gemini.');
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const messages: Message[] = body.messages; 
+    const responseMessage = await generateResponse(messages);
+    return NextResponse.json(responseMessage);
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: 'Failed to generate response' },
+      { status: 500 }
+    );
   }
 }

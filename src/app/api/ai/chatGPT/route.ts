@@ -1,3 +1,5 @@
+// src/app/api/ai/chatGPT/route.ts
+import { NextRequest, NextResponse } from 'next/server';
 import { Message, MessageContent } from '@/types/chat';
 import axios from 'axios';
 import crypto from 'crypto';
@@ -17,7 +19,6 @@ async function getImageDataUrl(imageUrl: string): Promise<string> {
 }
 
 export async function generateResponse(messages: Message[]): Promise<Message> {
-  console.log(messages);
   try {
     // Prepare the messages in the format expected by the OpenAI API
     const formattedMessages = await Promise.all(
@@ -98,5 +99,20 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
       console.error('Error:', error.message);
     }
     throw new Error('Failed to generate response using GPT-4.');
+  }
+}
+
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const messages: Message[] = body.messages; 
+    const responseMessage = await generateResponse(messages);
+    return NextResponse.json(responseMessage);
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: 'Failed to generate response' },
+      { status: 500 }
+    );
   }
 }

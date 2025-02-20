@@ -1,5 +1,5 @@
 "use server"
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { Message } from '@/types/chat';
 import axios from 'axios';
@@ -95,13 +95,16 @@ export async function generateResponse(messages: Message[]): Promise<Message> {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { messages } = await request.json();
-    const result = await generateResponse(messages);
-    return NextResponse.json(result);
+    const body = await request.json();
+    const messages: Message[] = body.messages; 
+    const responseMessage = await generateResponse(messages);
+    return NextResponse.json(responseMessage);
   } catch (error: any) {
-    console.error('Error processing POST request:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to generate response' },
+      { status: 500 }
+    );
   }
 }
