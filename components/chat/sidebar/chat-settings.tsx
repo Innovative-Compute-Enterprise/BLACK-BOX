@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select";
-import { Theme, useTheme } from "@/context/ThemeContext"; 
+import { Theme, useTheme } from "@/context/ThemeContext";
 import Link from "next/link";
 
 interface SettingsProps {
@@ -22,7 +22,6 @@ interface SettingsProps {
 
 export function Settings({ isOpen, onClose }: SettingsProps) {
   const { theme, setTheme } = useTheme();
-
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -80,7 +79,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
           <h2 className="text-lg font-semibold">Account</h2>
           <div className="mt-2">
             <Link
-              href="/account" // Adjust this route to your actual account page
+              href="/account"
               className="text-blue-500 hover:underline"
             >
               Manage Account

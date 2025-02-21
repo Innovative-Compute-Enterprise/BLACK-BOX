@@ -6,11 +6,15 @@ import MoonIcon from '../icons/MoonIcon';
 import SunIcon from '../icons/SunIcon';
 
 const ThemeSwitcher: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+
+  const handleThemeChange = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   return (
-    <button onClick={toggleTheme} className="p-4">
-      {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+    <button onClick={handleThemeChange} className="p-4">
+      {theme === 'dark' ? <SunIcon aria-label="Switch to light theme" /> : <MoonIcon aria-label="Switch to dark theme" />}
     </button>
   );
 };
