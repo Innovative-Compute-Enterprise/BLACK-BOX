@@ -1,3 +1,5 @@
+"use client"; // Mark as client component
+
 import {
   Dialog,
   DialogContent,
@@ -12,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select";
-import { Theme, useTheme } from "@/context/ThemeContext";
+import { useTheme } from "@/context/ThemeContext";
 import Link from "next/link";
 
 interface SettingsProps {
@@ -43,7 +45,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
               </label>
               <Select
                 value={theme}
-                onValueChange={(value: Theme) => setTheme(value)}
+                onValueChange={(value) => setTheme(value as "light" | "dark" | "system")}
               >
                 <SelectTrigger id="theme" className="w-full">
                   <SelectValue placeholder="Select Theme" />
@@ -78,10 +80,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
         <div className="mt-6">
           <h2 className="text-lg font-semibold">Account</h2>
           <div className="mt-2">
-            <Link
-              href="/account"
-              className="text-blue-500 hover:underline"
-            >
+            <Link href="/account" className="text-blue-500 hover:underline">
               Manage Account
             </Link>
           </div>

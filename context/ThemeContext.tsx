@@ -1,31 +1,66 @@
-"use client";
+"use client"; // Mark as client component
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
-// Define and export the Theme type
-export type Theme = 'light' | 'dark' | 'system';
+type Theme = 'light' | 'dark' | 'system';
 
-// Define the context shape
 interface ThemeContextProps {
   theme: Theme;
   setTheme: (theme: Theme) => void;
 }
 
-// Create the context
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
-// ThemeProvider component
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light');
+  // Initialize theme from localStorage or default to 'system'
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      const storedTheme = localStorage.getItem('theme') as Theme;
+      return storedTheme || 'system';
+    }
+    return 'system';
+  });
+
+  // Apply theme class to <html> element and handle system theme
+  useEffect(() => {
+    const root = document.documentElement;
+    const applyTheme = (themeToApply: Theme) => {
+      root.classList.remove('light', 'dark');
+      if (themeToApply === 'system') {
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        root.classList.add(systemTheme);
+      } else {
+        root.classList.add(themeToApply);
+      }
+    };
+
+    applyTheme(theme);
+
+    // Listen for system theme changes if theme is 'system'
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = () => {
+      if (theme === 'system') {
+        applyTheme('system');
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+  }, [theme]);
+
+  // Update theme and persist to localStorage
+  const handleSetTheme = (newTheme: Theme) => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme }}>
       {children}
     </ThemeContext.Provider>
   );
 };
 
-// Custom hook to use the theme context
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
