@@ -3,7 +3,7 @@
 import React, { useState, useContext, useEffect, useMemo } from "react";
 import { ChatContext } from "@/src/context/ChatContext";
 import { Tooltip } from "@heroui/tooltip";
-import { modelsConfig } from "@/lib/ai/models";
+import { modelsConfig } from "@/src/lib/ai/models";
 
 type ButtonState = "default" | "enabled" | "disabled";
 

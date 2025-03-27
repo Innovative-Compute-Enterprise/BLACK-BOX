@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.29.2",
     "@google/generative-ai": "^0.24.0",
     "@headlessui/react": "^2.1.2",
+    "@heroui/system": "^2.4.12",
     "@heroui/theme": "^2.4.9",
     "@heroui/tooltip": "2.2.8",
     "@radix-ui/react-dialog": "^1.1.2",
