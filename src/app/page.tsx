@@ -1,12 +1,12 @@
 // app/page.tsx
 import React from 'react';
-import { createClient } from '@/utils/supabase/server';
-import Header from '@/components/ui/header/Header';
+import { createClient } from '@/src/utils/supabase/server';
+import Header from '@/src/components/ui/header/Header';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
+import Dashboard from '@/src/components/ui/dashboard/Dashboard';
 
 export default async function Home() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -15,22 +15,32 @@ export default async function Home() {
   if (!user) {
     throw redirect('/0auth'); 
   }
+
+  // Fetch subscription info
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('*, prices(*)')
+    .eq('user_id', user.id)
+    .single();
+
+  // Get user details
+  const { data: userData } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  const userName = userData?.full_name || 'User';
+  const subStatus = subscription ? subscription.status : 'none';
+
   return (
     <main className="antialiased">
       <Header />
-      <section className="flex flex-col justify-center items-center min-h-screen px-4">
-        <h1 className="text-4xl font-bold mb-4 text-center">Welcome to My AI Chat Application!</h1>
-        <p className="text-lg mb-8 text-center w-[60%]">
-          This is a cutting-edge chat application powered by AI, where you can have interactive conversations with an AI assistant.
-          Your conversations are saved, and you can return to them anytime. Click the button below to start chatting!
-        </p>
-        <Link href={'/chat'}>
-        <button
-          className="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600"
-        >
-          Start Chatting
-        </button>
-        </Link>
+      <section className="flex flex-col justify-start items-center min-h-screen px-4 pt-[10%]">
+        <Dashboard 
+          userName={userName}
+          subscriptionStatus={subStatus}
+        />
       </section>
     </main>
   );

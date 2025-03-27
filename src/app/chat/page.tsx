@@ -1,14 +1,15 @@
 // app/chat/page.tsx
-import { Chat } from '@/components/chat/Chat';
-import { createClient } from '@/utils/supabase/server';
+import { Chat } from '@/src/components/chat/Chat';
+import { createClient } from '@/src/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import Loading from './../../../components/chat/message/loading'; // Create a loading component
-
+import Loading from '@/src/components/chat/message/loading';
+import { getUserDetails } from '@/src/utils/supabase/queries';
 
 export default async function ChatPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
+  // Fetch the user from Supabase auth
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -17,9 +18,14 @@ export default async function ChatPage() {
     redirect('/0auth');
   }
 
+  // Fetch additional user details for the full name
+  const [userDetails] = await Promise.all([
+    getUserDetails(supabase),
+  ]);
+
   return (
-    <Suspense fallback={<Loading />}> {/* Add suspense for smoother loading */}
-        <Chat />
+    <Suspense fallback={<Loading />}>
+      <Chat userName={userDetails?.full_name ?? ''} />
     </Suspense>
   );
 }

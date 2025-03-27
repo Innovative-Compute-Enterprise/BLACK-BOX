@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
@@ -6,13 +6,13 @@ import {
   getViewTypes,
   getDefaultSignInView,
   getRedirectMethod
-} from '@/utils/auth-helpers/settings';
-import BlackBox from '@/components/icons/BlackBox';
-import ForgotPassword from '@/components/ui/auth-components/ForgotPassword';
-import PasswordLogin from '@/components/ui/auth-components/PasswordLogin';
-import Signup from '@/components/ui/auth-components/Signup';
-import UpdatePassword from '@/components/ui/auth-components/UpdatePassword';
-import Welcome from '@/components/ui/auth-components/Welcome';
+} from '@/src/utils/auth-helpers/settings';
+import BlackBox from '@/src/components/icons/BlackBox';
+import ForgotPassword from '@/src/components/ui/auth-components/ForgotPassword';
+import PasswordLogin from '@/src/components/ui/auth-components/PasswordLogin';
+import Signup from '@/src/components/ui/auth-components/Signup';
+import UpdatePassword from '@/src/components/ui/auth-components/UpdatePassword';
+import Welcome from '@/src/components/ui/auth-components/Welcome'; // Ensure this path is correct
 
 export default async function SignIn({
   params,
@@ -29,11 +29,16 @@ export default async function SignIn({
   let viewProp: string = getDefaultSignInView(preferredSignInView);
 
   const viewTypes = getViewTypes();
-  if (typeof id === 'string' && viewTypes.includes(id)) {
-    viewProp = id;
+  // Allow 'welcome' as a valid view from the URL if needed, or handle default
+  if (id && viewTypes.includes(id)) {
+     viewProp = id;
+  } else if (!id && !preferredSignInView) {
+     // If no ID in URL and no preference cookie, maybe default to 'welcome'?
+     viewProp = 'welcome'; // Or keep your existing default logic
   }
 
-  const supabase = createClient();
+
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -42,47 +47,44 @@ export default async function SignIn({
     return redirect('/');
   }
   if (!user && viewProp === 'update_password') {
-    return redirect('/0auth');
+    return redirect('/0auth/welcome'); 
   }
 
   return (
-    <section>
-      <div className="absolute top-16 left-1/2 transform -translate-x-1/2">
-        <BlackBox className="w-[48px] h-[48px]" />
-      </div>
-      <div className="flex flex-col justify-center items-center min-h-screen">
-        <div className="flex flex-col justify-between m-auto max-w-lg w-[320px]">
-          <div
-            title={
-              viewProp === 'forgot_password'
-                ? 'Reset Password'
-                : viewProp === 'signup'
-                ? 'Sign Up'
-                : 'Sign In'
-            }
-          >
-            {viewProp === 'welcome' && <Welcome />}
-            {viewProp === 'password_signin' && (
-              <PasswordLogin
-                allowEmail={getAuthTypes().allowEmail}
-                redirectMethod={getRedirectMethod()}
-              />
-            )}
-            {viewProp === 'forgot_password' && (
-              <ForgotPassword
-                redirectMethod={getRedirectMethod()}
-                disableButton={disable_button}
-              />
-            )}
-            {viewProp === 'update_password' && (
-              <UpdatePassword redirectMethod={getRedirectMethod()} />
-            )}
-            {viewProp === 'signup' && (
-              <Signup redirectMethod={getRedirectMethod()} />
-            )}
+    <section className="relative min-h-screen w-full"> {/* Added relative for icon positioning */}
+
+      {/* Conditionally render the Welcome component WITHOUT the centering wrappers */}
+      {viewProp === 'welcome' ? (
+        <Welcome />
+      ) : (
+        <>
+          <div className="flex flex-col justify-center items-center min-h-screen px-4"> {/* Added some padding */}
+            <div className="flex flex-col justify-between w-full max-w-[364px] p-6 "> {/* Adjusted styling for auth forms */}
+              {/* No title prop needed here */}
+              <div>
+                {viewProp === 'password_signin' && (
+                  <PasswordLogin
+                    allowEmail={getAuthTypes().allowEmail}
+                    redirectMethod={getRedirectMethod()}
+                  />
+                )}
+                {viewProp === 'forgot_password' && (
+                  <ForgotPassword
+                    redirectMethod={getRedirectMethod()}
+                    disableButton={disable_button}
+                  />
+                )}
+                {viewProp === 'update_password' && (
+                  <UpdatePassword redirectMethod={getRedirectMethod()} />
+                )}
+                {viewProp === 'signup' && (
+                  <Signup redirectMethod={getRedirectMethod()} />
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </section>
   );
 }

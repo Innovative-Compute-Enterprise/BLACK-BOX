@@ -1,10 +1,10 @@
 // src/app/api/chat-sessions/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { handleChatSessionsGet } from '@/utils/chat/server'; 
-import { handleChatEdit } from '@/utils/chat/server'; 
-import { createClient } from '@/utils/supabase/server';
-import { handleSessionId } from '@/utils/chat/server';
+import { handleChatSessionsGet } from '@/src/utils/chat/server'; 
+import { handleChatEdit } from '@/src/utils/chat/server'; 
+import { createClient } from '@/src/utils/supabase/server';
+import { handleSessionId } from '@/src/utils/chat/server';
 
 /**
  * Handle POST requests to create a new chat session.
@@ -12,7 +12,7 @@ import { handleSessionId } from '@/utils/chat/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const reqBody = await request.json();
     const { userId } = reqBody;
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient(); // Initialize within request scope
+    const supabase = await createClient(); // Initialize within request scope
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const reqBody = await request.json();
     const { id: sessionId, title: newTitle, userId } = reqBody;

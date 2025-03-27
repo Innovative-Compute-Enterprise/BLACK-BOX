@@ -46,5 +46,12 @@
   "json.schemas": [
 
 ],
-"editor.cursorStyle": "line"
+"editor.cursorStyle": "line",
+"cSpell.words": [
+    "cmdk",
+    "headlessui",
+    "heroui",
+    "shadcn",
+    "supabase"
+]
 }

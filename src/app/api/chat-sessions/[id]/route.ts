@@ -1,7 +1,7 @@
 // src/app/api/chat-sessions/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { handleChatDelete } from '@/utils/chat/server';
-import { createClient } from '@/utils/supabase/server';
+import { handleChatDelete } from '@/src/utils/chat/server';
+import { createClient } from '@/src/utils/supabase/server';
 
 /**
  * Handle DELETE requests to delete a chat session.
@@ -9,7 +9,7 @@ import { createClient } from '@/utils/supabase/server';
  */
 export async function DELETE(request: NextRequest, context: any) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { params } = context;
     const { id: sessionId } = params;

@@ -1,8 +1,8 @@
 // src/app/api/chat/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { handlePost, handleGet } from '@/utils/chat/server'; // Adjust the import path as needed
-import { createClient } from '@/utils/supabase/server';
+import { handlePost, handleGet } from '@/src/utils/chat/server'; // Adjust the import path as needed
+import { createClient } from '@/src/utils/supabase/server';
 
 /**
  * Handle POST requests to send a message.
@@ -10,7 +10,7 @@ import { createClient } from '@/utils/supabase/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const reqBody = await request.json();
     const { content, sessionId, userId, model } = reqBody;
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient(); 
+    const supabase = await createClient(); 
 
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');

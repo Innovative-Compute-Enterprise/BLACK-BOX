@@ -1,12 +1,12 @@
 // src/app/layout.tsx
 import { Metadata } from 'next';
-import { getURL } from '@/utils/helpers';
+import { getURL } from '@/src/utils/helpers';
 import { Suspense } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Toaster } from '@/components/ui/Toasts/toaster';
-import { ThemeProvider } from '@/context/ThemeContext';
-import '@/styles/main.css';
+import { Toaster } from '@/src/components/ui/Toasts/toaster';
+import { ThemeProvider } from '@/src/context/ThemeContext';
+import '@/src/styles/main.css';
 
 const title = 'Black Box';
 const description = 'AI models and use cases for your all needs';
