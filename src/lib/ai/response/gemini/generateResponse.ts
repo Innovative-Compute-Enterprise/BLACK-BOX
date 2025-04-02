@@ -347,7 +347,7 @@ export async function generateResponse(
     }
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.0-flash-001",
       systemInstruction: {
         parts: [{ text: systemPrompt }],
         role: "model",

@@ -4,13 +4,18 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
 import PanelLeft from "@/src/components/icons/chat/PanelLeft";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 import { useIsMobile } from "@/src/hooks/use-mobile";
 import { cn } from "@/src/lib/utils";
 import { Button } from "@/src/components/shadcn/button";
 import { Input } from "@/src/components/shadcn/input";
 import { Separator } from "@/src/components/shadcn/separator";
-import { Sheet, SheetContent } from "@/src/components/shadcn/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from "@/src/components/shadcn/sheet";
 import { Skeleton } from "@/src/components/shadcn/skeleton";
 import {
   Tooltip,
@@ -21,7 +26,7 @@ import {
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = "15rem";
+const SIDEBAR_WIDTH = "19rem";
 const SIDEBAR_WIDTH_MOBILE = "19rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
@@ -206,6 +211,9 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
+            <VisuallyHidden>
+              <SheetTitle>Sidebar Navigation</SheetTitle>
+            </VisuallyHidden>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>

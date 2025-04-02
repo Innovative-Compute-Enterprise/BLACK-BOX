@@ -26,6 +26,7 @@ export function ChatLayoutClient({
     handleMultiDeleteChat,
     loadChatFromHistory,
     fetchChatHistories,
+    handleNewChat
   } = useChat({ sessionId: sessionId || undefined });
 
   // Initial fetch of chat histories when component mounts
@@ -45,6 +46,7 @@ export function ChatLayoutClient({
   return (
     <>
       <AppSidebar
+        handleNewChat={handleNewChat}
         subscription={subscription}
         chatHistories={chatHistories}
         currentSessionId={currentSessionId}

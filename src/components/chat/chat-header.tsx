@@ -13,7 +13,7 @@ interface ChatHeaderProps {
 const ChatHeader: React.FC<ChatHeaderProps> = React.memo(
   ({ handleNewChat, toggleModelLock }) => {
     return (
-      <header className="fixed z-[20] bg-transparent w-full flex items-center px-3">
+      <header className="fixed z-[20] bg-transparent w-full flex items-end px-3">
         <div className="flex items-center gap-2 w-full py-2">
           <Tooltip
             content="Menu lateral"

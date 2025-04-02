@@ -9,15 +9,24 @@ import React, {
 } from "react";
 import { format } from "date-fns";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/src/components/shadcn/dropdown-menu";
+  Edit,
+  Trash2,
+  MoreHorizontal,
+  Check,
+  X,
+  MessageSquare,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/src/components/shadcn/tooltip";
+import { Button } from "@/src/components/shadcn/button";
+import { Input } from "@/src/components/shadcn/input";
 import DeleteModal from "./chat-delete";
 import { usePathname } from "next/navigation";
+import { cn } from "@/src/lib/utils";
 
 export interface ChatHistory {
   id: string;
@@ -65,7 +74,6 @@ function groupChatsByDate(chats: ChatHistory[]): Record<string, ChatHistory[]> {
     } else if (chatDate >= last7Days) {
       groupLabel = "Last 7 days";
     } else {
-      // Everything else (older than 7 days) falls here
       groupLabel = "Last 30 days";
     }
 
@@ -114,12 +122,13 @@ function ChatItem({
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const pathname = usePathname();
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleEditKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
-        onEditSubmit(chat.id, newTitle);
-        e.preventDefault(); // Prevent form submission if applicable
+        onEditSubmit(chat.id, newTitle.trim() || "Untitled Chat");
+        e.preventDefault();
       } else if (e.key === "Escape") {
         onEditStart(null);
       }
@@ -131,16 +140,18 @@ function ChatItem({
     (event: MouseEvent) => {
       if (
         inputRef.current &&
-        !inputRef.current.contains(event.target as Node)
+        !inputRef.current.contains(event.target as Node) &&
+        editingChatId === chat.id
       ) {
         onEditStart(null);
       }
     },
-    [onEditStart]
+    [onEditStart, editingChatId, chat.id]
   );
 
   useEffect(() => {
     if (editingChatId === chat.id) {
+      inputRef.current?.focus();
       document.addEventListener("mousedown", handleClickOutside);
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
@@ -148,121 +159,127 @@ function ChatItem({
     }
   }, [editingChatId, chat.id, handleClickOutside]);
 
-  // Determine if the current chat is active based on the URL
   const isChatActive = useMemo(() => {
-    return pathname === `/chat/${chat.id}`;
-  }, [pathname, chat.id]);
+    return currentSessionId === chat.id;
+  }, [currentSessionId, chat.id]);
+
+  const displayTitle = chat.title || `Chat from ${format(new Date(chat.created_at), "PP")}`;
 
   return (
-    <div
-      className={`group/chat relative flex items-center text-md justify-between w-full py-1.5 px-2 rounded-md my-1 ${
-        isChatActive || hoveredChatId === chat.id
-          ? "bg-gray-200 dark:bg-zinc-700"
-          : "hover:bg-gray-200 dark:hover:bg-zinc-900"
-      } ${isSelected ? "border-2 border-blue-500" : ""}`}
-      data-chat-id={chat.id}
-      onMouseEnter={() => setHoveredChatId(chat.id)}
-      onMouseLeave={() => {
-        // Only reset hover if not the current session
-        if (!isChatActive) {
-          setHoveredChatId(null);
-        }
-      }}
-    >
-      {selectionMode && (
-        <div className="mr-2 flex-shrink-0">
-          <input
-            type="checkbox"
-            checked={!!isSelected}
-            onChange={() => onToggleSelect?.(chat.id)}
-            className="h-4 w-4 rounded border-gray-300"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
-
-      <button
-        onClick={() => {
-          if (selectionMode) {
-            onToggleSelect?.(chat.id);
-          } else {
-            onChatSelection(chat.id);
-          }
-        }}
-        className="flex-1 text-left font-light rounded-md transition-colors min-w-0 overflow-hidden"
-        aria-label={`Load chat ${
-          chat.title || format(new Date(chat.created_at), "PP")
-        }`}
-        aria-current={chat.id === currentSessionId ? "true" : undefined}
-        disabled={isEditing}
-      >
-        {editingChatId === chat.id ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={handleEditKeyDown}
-            className="w-full bg-transparent rounded-sm border border-gray-300 focus:outline-none text-gray-800 dark:text-gray-200"
-            autoFocus
-            aria-label="Edit chat title"
-          />
-        ) : (
-          <span className="text-sm whitespace-nowrap overflow-hidden">
-            {chat.title}
-          </span>
+    <TooltipProvider delayDuration={300}>
+      <div
+        className={cn(
+          "group/chat relative flex items-center text-sm justify-between w-full py-1 px-2 rounded-md my-0.5 transition-colors duration-150",
+          isChatActive
+            ? "bg-gray-200 dark:bg-zinc-700 font-medium"
+            : "hover:bg-gray-100 dark:hover:bg-zinc-800",
+          isSelected && !isChatActive
+            ? "bg-blue-100 dark:bg-blue-900/30 ring-1 ring-blue-500"
+            : ""
         )}
-      </button>
+        data-chat-id={chat.id}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {selectionMode && (
+          <div className="mr-2 flex-shrink-0">
+            <input
+              type="checkbox"
+              checked={!!isSelected}
+              onChange={() => onToggleSelect?.(chat.id)}
+              className="h-4 w-4 rounded border-gray-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`Select chat ${displayTitle}`}
+            />
+          </div>
+        )}
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            className={`p-1 rounded-md flex-shrink-0 ml-1 ${
-              hoveredChatId === chat.id ? "opacity-100" : "opacity-0"
-            } transition-opacity duration-100`}
-            aria-label="Chat options"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-3 h-3"
-              viewBox="0 0 20 20"
-            >
-              <g fill="none">
-                <path
-                  d="M3 6a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6z"
-                  fill="currentColor"
-                ></path>
-              </g>
-            </svg>
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuLabel>Options</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => {
-              onEditStart(chat.id);
-              setNewTitle(chat.title || "");
-            }}
-            disabled={isEditing}
-          >
-            Edit
-            <kbd className="ml-auto text-xs text-black/50 dark:text-white/50">
-              {isMac ? "⌘E" : "Ctrl+E"}
-            </kbd>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => onOpenDeleteModal(chat.id)}
-            disabled={isEditing}
-          >
-            Delete
-            <kbd className="ml-auto text-xs text-black/50 dark:text-white/50">
-              {isMac ? "⌘D" : "Ctrl+D"}
-            </kbd>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+        <button
+          onClick={() => {
+            if (isEditing) return;
+            if (selectionMode) {
+              onToggleSelect?.(chat.id);
+            } else {
+              onChatSelection(chat.id);
+            }
+          }}
+          className="flex-1 text-left rounded-md transition-colors min-w-0 overflow-hidden h-8 flex items-center"
+          aria-label={`Load chat: ${displayTitle}`}
+          aria-current={isChatActive ? "page" : undefined}
+          disabled={isEditing && editingChatId === chat.id}
+        >
+          {editingChatId === chat.id ? (
+            <Input
+              ref={inputRef}
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={handleEditKeyDown}
+              onBlur={() => {
+                setTimeout(() => {
+                  if (editingChatId === chat.id) {
+                    onEditSubmit(chat.id, newTitle.trim() || "Untitled Chat");
+                  }
+                }, 100);
+              }}
+              className="h-7 text-sm px-1 py-0 w-full bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-800 dark:text-gray-200 rounded"
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Edit chat title"
+            />
+          ) : (
+            <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis pr-1">
+              {displayTitle}
+            </span>
+          )}
+        </button>
+
+        {!isEditing && (isHovered || isChatActive || isSelected) && !selectionMode && (
+           <div className="flex items-center flex-shrink-0 ml-1 space-x-0.5">
+             <Tooltip>
+               <TooltipTrigger asChild>
+                 <Button
+                   variant="ghost"
+                   size="icon"
+                   className="h-6 w-6 p-0 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     onEditStart(chat.id);
+                     setNewTitle(chat.title || "");
+                   }}
+                   aria-label="Edit chat title"
+                 >
+                   <Edit size={14} />
+                 </Button>
+               </TooltipTrigger>
+               <TooltipContent side="top">Edit Title</TooltipContent>
+             </Tooltip>
+             <Tooltip>
+               <TooltipTrigger asChild>
+                 <Button
+                   variant="ghost"
+                   size="icon"
+                   className="h-6 w-6 p-0 text-red-500 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     onOpenDeleteModal(chat.id);
+                   }}
+                   aria-label="Delete chat"
+                 >
+                   <Trash2 size={14} />
+                 </Button>
+               </TooltipTrigger>
+               <TooltipContent side="top">Delete Chat</TooltipContent>
+             </Tooltip>
+           </div>
+         )}
+        {!isEditing && !(isHovered || isChatActive || isSelected) && !selectionMode && (
+          <div className="flex items-center flex-shrink-0 ml-1 space-x-0.5 h-6 w-[calc(1.5rem*2+0.125rem)]">
+            &nbsp;
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
 
@@ -274,204 +291,220 @@ export function ChatHistory({
   onMultiDeleteChat,
   onChatSelection,
 }: ChatHistoryProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isClient, setIsClient] = useState(false);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
-  const [newTitle, setNewTitle] = useState<string>("");
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [newTitle, setNewTitle] = useState("");
   const [chatToDelete, setChatToDelete] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
   const [hoveredChatId, setHoveredChatId] = useState<string | null>(null);
-  const [selectedChats, setSelectedChats] = useState<string[]>([]);
-  const [selectionMode, setSelectionMode] = useState<boolean>(false);
 
-  // Memoize isMac calculation
-  const isMac = useMemo(() => {
-    if (typeof navigator !== "undefined") {
-      return /Mac|iPod|iPhone|iPad/.test(navigator.platform);
-    }
-    return true; // Default to true if unable to determine
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedChatIds, setSelectedChatIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setIsClient(true);
+    setIsMac(navigator.userAgent.toUpperCase().indexOf("MAC") >= 0);
   }, []);
 
-  // Memoize sorted chats
   const sortedChats = useMemo(() => {
     return [...chatHistories].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
   }, [chatHistories]);
 
-  // Group the chats by date
-  const groupedChats = useMemo(() => {
-    return groupChatsByDate(sortedChats);
-  }, [sortedChats]);
-
-  // Simplified handleEditSubmit
-  const handleEditSubmit = useCallback(
-    async (id: string, title: string) => {
-      if (!title.trim()) return;
-      setIsEditing(true);
-      try {
-        await onEditChat(id, title.trim());
-      } catch (error) {
-        console.error("Failed to edit chat:", error);
-      } finally {
-        setEditingChatId(null);
-        setIsEditing(false);
-      }
-    },
-    [onEditChat]
+  const groupedChats = useMemo(
+    () => (isClient ? groupChatsByDate(sortedChats) : {}),
+    [sortedChats, isClient]
   );
 
-  const openDeleteModal = useCallback((id: string) => {
+  const handleEditStart = useCallback((id: string | null) => {
+    setEditingChatId(id);
+    if (id) {
+      const chat = chatHistories.find((c) => c.id === id);
+      setNewTitle(chat?.title || "");
+    } else {
+      setNewTitle("");
+    }
+  }, [chatHistories]);
+
+  const handleEditSubmit = useCallback(
+    async (id: string, title: string) => {
+      const trimmedTitle = title.trim();
+      if (trimmedTitle) {
+        await onEditChat(id, trimmedTitle);
+      }
+      handleEditStart(null);
+    },
+    [onEditChat, handleEditStart]
+  );
+
+  const handleOpenDeleteModal = useCallback((id: string) => {
     setChatToDelete(id);
     setIsDeleteModalOpen(true);
   }, []);
 
-  const confirmDelete = useCallback(() => {
-    if (selectionMode && selectedChats.length > 0 && onMultiDeleteChat) {
-      onMultiDeleteChat(selectedChats);
-      setIsDeleteModalOpen(false);
-      setSelectedChats([]);
-      setSelectionMode(false);
-    } else if (chatToDelete) {
+  const handleConfirmDelete = useCallback(() => {
+    if (chatToDelete) {
       onDeleteChat(chatToDelete);
-      setIsDeleteModalOpen(false);
       setChatToDelete(null);
     }
-  }, [chatToDelete, onDeleteChat, selectionMode, selectedChats, onMultiDeleteChat]);
+    setIsDeleteModalOpen(false);
+  }, [chatToDelete, onDeleteChat]);
 
   const toggleSelectionMode = useCallback(() => {
-    setSelectionMode(prev => !prev);
-    if (selectionMode) {
-      setSelectedChats([]);
-    }
-  }, [selectionMode]);
-
-  const toggleSelectChat = useCallback((id: string) => {
-    setSelectedChats(prev => 
-      prev.includes(id) 
-        ? prev.filter(chatId => chatId !== id)
-        : [...prev, id]
-    );
+    setSelectionMode((prev) => !prev);
+    setSelectedChatIds(new Set());
   }, []);
 
-  const handleMultiDeleteClick = useCallback(() => {
-    if (selectedChats.length > 0) {
-      setIsDeleteModalOpen(true);
-    }
-  }, [selectedChats]);
-
-  // Focus management
-  useEffect(() => {
-    if (editingChatId) {
-      const inputElement =
-        document.querySelector<HTMLInputElement>('input[type="text"]');
-      inputElement?.focus();
-    }
-  }, [editingChatId]);
-
-  // Optimized Scroll to selected chat
-  useEffect(() => {
-    if (currentSessionId && scrollRef.current) {
-      const selectedChat = scrollRef.current.querySelector(
-        `[data-chat-id="${currentSessionId}"]`
-      );
-      if (selectedChat) {
-        selectedChat.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedChatIds((prev) => {
+      const newSelection = new Set(prev);
+      if (newSelection.has(id)) {
+        newSelection.delete(id);
+      } else {
+        newSelection.add(id);
       }
-    }
-  }, [currentSessionId]);
+      if (newSelection.size === 0) {
+        setSelectionMode(false);
+      }
+      return newSelection;
+    });
+  }, []);
 
-  // Optimized Keyboard navigation useEffect
+  const handleMultiDelete = useCallback(() => {
+    if (onMultiDeleteChat && selectedChatIds.size > 0) {
+      onMultiDeleteChat(Array.from(selectedChatIds));
+      setSelectedChatIds(new Set());
+      setSelectionMode(false);
+    }
+  }, [onMultiDeleteChat, selectedChatIds]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (editingChatId) return; // Don't handle when editing
       if (e.key === "Escape") {
-        setIsDeleteModalOpen(false);
-        setEditingChatId(null);
-        if (selectionMode) {
-          setSelectionMode(false);
-          setSelectedChats([]);
+        if (editingChatId) {
+          handleEditStart(null);
+        } else if (selectionMode) {
+          toggleSelectionMode();
         }
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editingChatId, selectionMode]);
+  }, [editingChatId, handleEditStart, selectionMode, toggleSelectionMode]);
+
+  useEffect(() => {
+    if (currentSessionId) {
+      setHoveredChatId(currentSessionId);
+    }
+  }, [currentSessionId]);
+
+  const groupOrder = ["Today", "Yesterday", "Last 7 days", "Last 30 days"];
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="pb-2 px-2 flex justify-between items-center">
-        <h2 className="text-sm font-semibold">Chat History</h2>
-        <div className="flex space-x-2">
-          <button 
-            onClick={toggleSelectionMode}
-            className={`p-1 rounded-md text-xs ${selectionMode ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-            aria-label={selectionMode ? "Exit selection mode" : "Select multiple chats"}
-          >
-            {selectionMode ? "Cancel" : "Select"}
-          </button>
-          
-          {selectionMode && selectedChats.length > 0 && (
-            <button 
-              onClick={handleMultiDeleteClick}
-              className="p-1 rounded-md text-xs bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-              aria-label="Delete selected chats"
-            >
-              Delete ({selectedChats.length})
-            </button>
-          )}
-        </div>
-      </div>
+    <TooltipProvider delayDuration={300}>
+      <div className="flex flex-col h-full">
+        <div className="flex justify-end px-2 mb-1 h-8 items-center">
+           {chatHistories.length > 0 && onMultiDeleteChat && (
+             <Button
+               variant="ghost"
+               size="sm"
+               onClick={toggleSelectionMode}
+               className="text-xs h-7 px-2"
+             >
+               {selectionMode ? "Cancel" : "Select"}
+             </Button>
+           )}
+         </div>
 
-      <div
-        ref={scrollRef}
-        className="scrollbar-hide flex-1 space-y-9 overflow-auto"
-      >
-        {Object.entries(groupedChats).map(([group, chats]) => (
-          <div key={group} role="list" aria-label={group}>
-            <h3 className="text-[12px] font-bold text-black/50 dark:text-white/50 mb-1 px-2">
-              {group}
-            </h3>
-            {chats.map((chat) => (
-              <ChatItem
-                key={chat.id}
-                chat={chat}
-                currentSessionId={currentSessionId}
-                editingChatId={editingChatId}
-                newTitle={newTitle}
-                setNewTitle={setNewTitle}
-                hoveredChatId={hoveredChatId}
-                setHoveredChatId={setHoveredChatId}
-                isEditing={isEditing}
-                onChatSelection={onChatSelection}
-                onEditStart={setEditingChatId}
-                onEditSubmit={handleEditSubmit}
-                onOpenDeleteModal={openDeleteModal}
-                isMac={isMac}
-                isSelected={selectedChats.includes(chat.id)}
-                onToggleSelect={toggleSelectChat}
-                selectionMode={selectionMode}
-              />
-            ))}
-          </div>
-        ))}
-
-        {sortedChats.length === 0 && (
-          <div className="text-center text-gray-500 mt-10" role="status">
-            No previous chats.
+        {selectionMode && (
+          <div className="flex justify-between items-center px-2 py-1 border-b border-gray-200 dark:border-zinc-700 mb-1">
+            <span className="text-xs font-medium">{selectedChatIds.size} selected</span>
+            <div className="flex items-center space-x-1">
+               <Tooltip>
+                 <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 disabled:opacity-50"
+                      onClick={handleMultiDelete}
+                      disabled={selectedChatIds.size === 0}
+                      aria-label="Delete selected chats"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Delete Selected</TooltipContent>
+                </Tooltip>
+               <Tooltip>
+                 <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-zinc-700"
+                      onClick={toggleSelectionMode}
+                      aria-label="Cancel selection"
+                    >
+                      <X size={16} />
+                    </Button>
+                 </TooltipTrigger>
+                 <TooltipContent side="bottom">Cancel</TooltipContent>
+               </Tooltip>
+             </div>
           </div>
         )}
-      </div>
 
-      {isDeleteModalOpen && (
-        <DeleteModal
-          setIsDeleteModalOpen={setIsDeleteModalOpen}
-          confirmDelete={confirmDelete}
-          multiDelete={selectionMode && selectedChats.length > 0}
-          count={selectionMode ? selectedChats.length : 1}
-        />
-      )}
-    </div>
+        <div className="flex-1 overflow-y-auto pr-1">
+          {isClient && chatHistories.length === 0 ? (
+             <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 dark:text-gray-400 px-4">
+               <MessageSquare size={32} className="mb-2" />
+               <p className="text-sm">No chat history yet.</p>
+               <p className="text-xs mt-1">Start a new conversation!</p>
+             </div>
+           ) : (
+            groupOrder.map((groupLabel) =>
+              groupedChats[groupLabel] ? (
+                <div key={groupLabel} className="mb-2 last:mb-0">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-2 py-1 sticky top-0 bg-sidebar z-10">
+                    {groupLabel}
+                  </p>
+                  {groupedChats[groupLabel].map((chat) => (
+                    <ChatItem
+                      key={chat.id}
+                      chat={chat}
+                      currentSessionId={currentSessionId}
+                      editingChatId={editingChatId}
+                      newTitle={newTitle}
+                      setNewTitle={setNewTitle}
+                      hoveredChatId={hoveredChatId}
+                      setHoveredChatId={setHoveredChatId}
+                      isEditing={editingChatId === chat.id}
+                      onChatSelection={onChatSelection}
+                      onEditStart={handleEditStart}
+                      onEditSubmit={handleEditSubmit}
+                      onOpenDeleteModal={handleOpenDeleteModal}
+                      isMac={isMac}
+                      isSelected={selectedChatIds.has(chat.id)}
+                      onToggleSelect={handleToggleSelect}
+                      selectionMode={selectionMode}
+                    />
+                  ))}
+                </div>
+              ) : null
+            )
+          )}
+        </div>
+
+        {/* Conditionally render Delete Confirmation Modal */}
+        {isDeleteModalOpen && (
+          <DeleteModal
+            setIsDeleteModalOpen={setIsDeleteModalOpen}
+            confirmDelete={handleConfirmDelete}
+          />
+        )}
+      </div>
+    </TooltipProvider>
   );
 }

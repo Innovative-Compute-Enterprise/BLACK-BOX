@@ -1,38 +1,10 @@
 // lib/utils.ts
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { createSearchQuery, performWebSearch } from "./ai/cortex.server";
-
-
-const searchCache = new Map();
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
-}
-
-// New function in utils.ts or similar location
-export async function WebSearch(query: string, contextMessages = []) {
-  const cacheKey = query.trim().toLowerCase();
-  const cached = searchCache.get(cacheKey);
-  
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.results;
-  }
-  
-  try {
-    // Reuse your existing search functionality
-    const refinedQuery = await createSearchQuery(query, contextMessages);
-    const results = await performWebSearch(refinedQuery, contextMessages);
-    
-    // Cache results
-    searchCache.set(cacheKey, { results, timestamp: Date.now() });
-    return results;
-  } catch (error) {
-    console.error("WebSearch function error:", error);
-    return [];
-  }
 }
 
 /**
@@ -87,6 +59,7 @@ export function tryParseStructuredContent(text: string) {
     const sourcesRegex = /(?:^|\n)Sources:[\s\n]+((?:(?:\d+\.\s*)?\[.*?\]\(.*?\)[\s\n]*,?\s*)+)$/;
     const sourcesMatch = text.match(sourcesRegex);
     
+    // First try explicit "Sources:" section
     if (sourcesMatch) {
       // Extract the text before the sources section
       const mainContent = text.replace(sourcesRegex, '').trim();
@@ -107,6 +80,81 @@ export function tryParseStructuredContent(text: string) {
       
       // Create structured content with main text and sources
       if (sources.length > 0) {
+        // Split main content by paragraphs
+        const paragraphs = mainContent.split(/\n\s*\n/).filter(p => p.trim());
+        
+        // Create structured content with separate paragraph items
+        const contentItems = paragraphs.map(p => ({ 
+          type: 'paragraph', 
+          content: p.trim() 
+        }));
+        
+        return [
+          ...contentItems,
+          { type: 'sources', sources }
+        ];
+      }
+    }
+    
+    // NEW: Look for bullet points with links that might be sources
+    // Detect patterns like:
+    // - Text [Title](URL)
+    // • Text [Title](URL)
+    // * Text [Title](URL)
+    // 1. Text [Title](URL)
+    const lines = text.split('\n');
+    const bulletPointRegex = /^[\s]*[-•*][\s]+.*\[.*?\]\(https?:\/\/.*?\).*$/;
+    const numberedPointRegex = /^[\s]*\d+\.[\s]+.*\[.*?\]\(https?:\/\/.*?\).*$/;
+    
+    // Check if we have at least 2 bullet points with links at the end of the text
+    const potentialSourceLines = [];
+    let lastNormalLine = 0;
+    
+    // Find potential source lines
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line && (bulletPointRegex.test(line) || numberedPointRegex.test(line))) {
+        potentialSourceLines.push(i);
+      } else if (line) {
+        lastNormalLine = i;
+      }
+    }
+    
+    // If there are potential sources and they appear after the main content 
+    // (with possibly 1-2 lines in between, like "Fontes:")
+    if (potentialSourceLines.length >= 2 && 
+        potentialSourceLines[0] > lastNormalLine && 
+        potentialSourceLines[0] - lastNormalLine <= 3) {
+      
+      // Extract sources from bullet points
+      const sources = [];
+      for (const lineIdx of potentialSourceLines) {
+        const line = lines[lineIdx];
+        // Extract links from line
+        const linkMatches = line.match(/\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g);
+        
+        if (linkMatches) {
+          for (const match of linkMatches) {
+            const titleMatch = match.match(/\[(.*?)\]/);
+            const urlMatch = match.match(/\((https?:\/\/[^\s)]+)\)/);
+            
+            if (titleMatch && urlMatch) {
+              sources.push({
+                title: titleMatch[1],
+                url: urlMatch[1]
+              });
+            }
+          }
+        }
+      }
+      
+      if (sources.length > 0) {
+        // Get content before sources section
+        const contentLines = lines.slice(0, potentialSourceLines[0] - 1);
+        // Remove any "Fontes:" or "Sources:" line
+        let mainContent = contentLines.join('\n').trim();
+        mainContent = mainContent.replace(/(?:^|\n)(?:Fontes|Sources):?\s*$/i, '').trim();
+        
         // Split main content by paragraphs
         const paragraphs = mainContent.split(/\n\s*\n/).filter(p => p.trim());
         

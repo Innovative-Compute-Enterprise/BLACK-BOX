@@ -1,12 +1,11 @@
 "use client";
 
 import { generateUniqueId } from "@/src/utils/uniqueId";
-import { useCallback, useState, useEffect, useMemo } from "react";
+import { useCallback, useState, useEffect, useMemo, useRef } from "react";
 import { flushSync } from "react-dom";
 import { startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  useChatStore, 
   useMessages, 
   useSetMessages,
   useCurrentSessionId,
@@ -19,7 +18,6 @@ import {
 import { Message, ChatHistory } from "@/src/types/chat";
 import { useFileUpload } from "./useFIleUpload";
 import { useChatContext } from "@/src/context/ChatContext";
-import { performWebSearch } from "@/src/lib/ai/cortex.server";
 import { createClient } from "@/src/utils/supabase/client";
 import { useToast } from "@/src/components/ui/Toasts/use-toast";
 import { createSuccessToast, createErrorToast } from "@/src/utils/helpers";
@@ -41,6 +39,11 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
   const router = useRouter();
   const supabase = createClient();
   const { toast } = useToast();
+
+  // Ref to track ongoing session creation to coordinate with real-time updates
+  const isCreatingSessionRef = useRef(false);
+  // Ref to store the ID of the session just created locally
+  const recentlyCreatedSessionIdRef = useRef<string | null>(null);
 
   // --- Use Zustand store selectors for state ---
   const messages = useMessages();
@@ -99,13 +102,14 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
     window.addEventListener('custom-instructions-updated', handleCustomInstructionsUpdate as EventListener);
     
     // Log the current custom instructions on mount
-    console.log('[useChat] Current custom instructions on mount:', 
+    console.log('[useChat] Current custom instructions on mount:',
       customInstructions ? customInstructions.substring(0, 30) + '...' : '(none)');
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('custom-instructions-updated', handleCustomInstructionsUpdate as EventListener);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Memoize toggle functions to prevent recreating them on every render
@@ -127,27 +131,6 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
     isProcessingFiles,
     getFileStatus, // Use the debug helper
   } = useFileUpload(userId);
-
-  // Sync processed files with the Zustand store
-  useEffect(() => {
-    console.log('[useChat] Syncing processed files with store:', processedFiles);
-    
-    // Force immediate state update with a delay to ensure UI updates
-    const syncFiles = () => {
-      console.log('[useChat] Setting selectedFiles in store:', processedFiles);
-      setSelectedFiles(processedFiles);
-    };
-    
-    // First immediate update
-    syncFiles();
-    
-    // Then another update after a short delay to ensure UI refreshes
-    const timer = setTimeout(() => {
-      syncFiles();
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, [processedFiles, setSelectedFiles]);
 
   // --- Auth Handling ---
   useEffect(() => {
@@ -188,7 +171,21 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
           table: "chat_sessions",
           filter: `user_id=eq.${userId}`,
         },
-        () => {
+        (payload) => { // <-- Accept payload
+          // If it's an INSERT event AND the new record's ID matches the one we just created locally...
+          if (payload.eventType === 'INSERT' && payload.new?.id && payload.new.id === recentlyCreatedSessionIdRef.current) {
+              console.log('[useChat] Subscription INSERT matches recently created session. Skipping fetch.');
+              // We already handled this optimistically and then manually updated it with the real ID.
+              // Clear the ref now as this confirmation means the DB has the record.
+              recentlyCreatedSessionIdRef.current = null;
+              return;
+          }
+          // Also skip if the main creation flag is still active (covers edge cases/timing)
+          if (isCreatingSessionRef.current) {
+             console.log('[useChat] Subscription triggered during optimistic creation phase. Skipping fetch.');
+             return;
+          }
+          console.log('[useChat] Subscription triggered for other change, fetching chat histories.');
           // Refresh chat histories when a change is detected
           fetchChatHistories();
         }
@@ -270,67 +267,30 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
       
       const historyData = await fetchChatHistory(id);
       if (historyData) {
-        // Check for file attachments in messages
-        const messagesWithFiles = historyData.messages.filter(
-          msg => (msg.files && msg.files.length > 0) || 
-                 msg.content.some(c => c.type === 'file_url' || c.type === 'image_url')
-        );
         
-        if (messagesWithFiles.length > 0) {
-          console.log(`[useChat] Found ${messagesWithFiles.length} messages with file attachments`);
-          
-          // Log details of the first message with files
-          if (messagesWithFiles.length > 0) {
-            const firstFileMsg = messagesWithFiles[0];
-            console.log(`[useChat] First message with files: ${firstFileMsg.id}`, {
-              explicitFiles: firstFileMsg.files?.length || 0,
-              fileContentItems: firstFileMsg.content.filter(c => c.type === 'file_url' || c.type === 'image_url').length
-            });
-          }
-        }
-        
-        // Ensure all messages have the necessary properties
+        // Assume messages from historyData are correctly structured
         const processedMessages = historyData.messages.map(msg => {
-          // Make sure createdAt exists (for sorting/display)
+          // Ensure createdAt exists (for sorting/display)
           if (!msg.createdAt) {
+            console.warn(`[useChat] Message ${msg.id} missing createdAt, adding default.`);
             msg.createdAt = Date.now();
           }
-          
-          // Make sure files are available for rendering
-          if (!msg.files) {
-            // Try to extract files from content items
-            const fileContentItems = msg.content
-              .filter(item => item.type === 'file_url' || item.type === 'image_url')
-              .map(item => {
-                if (item.type === 'file_url') {
-                  const fileItem = item as { type: 'file_url', file_url: { url: string }, mime_type?: string, file_name?: string };
-                  return {
-                    id: `file-${Math.random().toString(36).substring(2, 9)}`,
-                    name: fileItem.file_name || 'File',
-                    type: 'document',
-                    size: 0,
-                    url: fileItem.file_url.url,
-                    mime_type: fileItem.mime_type || 'application/octet-stream',
-                    isImage: false
-                  };
-                } else {
-                  const imageItem = item as { type: 'image_url', image_url: { url: string } };
-                  return {
-                    id: `image-${Math.random().toString(36).substring(2, 9)}`,
-                    name: 'Image',
-                    type: 'image',
-                    size: 0,
-                    url: imageItem.image_url.url,
-                    mime_type: 'image/jpeg',
-                    isImage: true
-                  };
-                }
-              });
-            
-            if (fileContentItems.length > 0) {
-              msg.files = fileContentItems;
-              console.log(`[useChat] Reconstructed ${fileContentItems.length} files for message ${msg.id}`);
-            }
+          // Ensure content is an array
+          if (!Array.isArray(msg.content)) {
+             console.warn(`[useChat] Message ${msg.id} content is not an array, wrapping.`);
+             // Attempt to wrap based on previous structure, otherwise log error
+             if (typeof msg.content === 'string') {
+               msg.content = [{ type: 'text', text: msg.content }];
+             } else {
+               console.error(`[useChat] Cannot process non-array, non-string content for message ${msg.id}. Setting to empty.`);
+               msg.content = [];
+             }
+          }
+          // Ensure files array exists if there are file content items (basic check)
+          if (!msg.files && msg.content.some(c => c.type === 'file_url' || c.type === 'image_url')) {
+            console.warn(`[useChat] Message ${msg.id} has file content items but missing files array. Downstream rendering might fail.`);
+            // Do not attempt reconstruction, rely on backend correctness
+            msg.files = []; // Add empty array to satisfy type if needed
           }
           
           return msg;
@@ -338,11 +298,8 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
         
         setMessages(processedMessages);
         
-        // Set the model from the history data if available
         if (historyData.model) {
           setModel(historyData.model);
-          
-          // Only lock the model if there are messages in the chat
           setIsModelLocked(historyData.messages?.length > 0);
         }
       } else {
@@ -451,170 +408,188 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
       .filter(file => file.processedFile) 
       .map(file => file.processedFile);
     
-    console.log(`[useChat] Sending message with ${fileAttachments.length} file attachments:`, 
-      fileAttachments.map(f => ({ id: f.id, name: f.name, url: f.url })));
+    console.log(`[useChat] Sending message with ${fileAttachments.length} file attachments`);
 
     // Create file content items for the message
     const fileContentItems = fileAttachments.map(file => ({
-      type: "file_url",
-      file_url: { url: file.url },
+      type: file.isImage ? "image_url" : "file_url", // Use correct type based on attachment
+      [file.isImage ? "image_url" : "file_url"]: { url: file.url },
       mime_type: file.mime_type,
       file_name: file.name
     }));
 
-    // Create content array with text message (if any) and file items
+    // Create content array for optimistic update
     const contentArray = [];
     if (trimmedInput) {
       contentArray.push({ type: "text", text: trimmedInput });
     }
     contentArray.push(...fileContentItems);
 
+    // Ensure contentArray is not empty before proceeding
+    if (contentArray.length === 0) {
+        console.error("Cannot send an empty message (no text and no valid files).");
+        return;
+    }
+
     const optimisticUserMessage: Message = {
       id: generateUniqueId(),
-      content: contentArray,
+      content: contentArray, // Use the array format
       role: "user",
-      displayedContent: trimmedInput,
+      displayedContent: trimmedInput, // Keep text for display if needed
       pending: false,
       createdAt: Date.now(),
-      files: fileAttachments, 
+      files: fileAttachments, // Keep attaching files for rendering
     };
 
     const optimisticLoadingMessage: Message = {
       id: generateUniqueId(),
-      content: [{ type: "text", text: "" }],
+      content: [{ type: "text", text: "" }], // Still needs valid content structure
       role: "assistant",
       displayedContent: "",
       pending: true,
       createdAt: Date.now(),
     };
 
+    // --- Optimistic UI Update for New Session (if applicable) ---
+    let tempSessionId: string | null = null; // Keep track of temp ID if created
+    if (!currentSessionId && userId) {
+        tempSessionId = `temp-${generateUniqueId()}`;
+        const now = new Date().toISOString();
+        const tempChatHistory: ChatHistory = {
+          id: tempSessionId,
+          title: trimmedInput.slice(0, 30) + (trimmedInput.length > 30 ? "..." : ""),
+          created_at: now,
+          updated_at: now,
+        };
+        // Prepend optimistically *before* starting the transition
+        setChatHistories((prev) => [tempChatHistory, ...prev]);
+        console.log('[useChat] Optimistically added temp session history:', tempSessionId);
+    }
+
     // Batch state updates together
     flushSync(() => {
-      // Update multiple pieces of state at once to reduce renders
       setIsSubmitting(true);
+      // Use the correctly typed optimistic messages
       setMessages([...messages, optimisticUserMessage, optimisticLoadingMessage]);
       setInputMessage("");
       setIsModelLocked(true);
       setSelectedFiles([]);
     });
 
-    let contextItems = [];
-
-    // Handle web search - manual only
-    if (isWebSearchEnabled && trimmedInput) {
-      try {
-        console.log('[useChat] Performing web search for:', trimmedInput.substring(0, 30) + '...');
-        const searchResults = await performWebSearch(trimmedInput, messages);
-        
-        if (searchResults?.length > 0) {
-          contextItems = searchResults.map((result) => ({
-            type: "web_search_result",
-            title: result.title,
-            snippet: result.snippet,
-            url: result.url,
-          }));
-          
-          console.log(`[useChat] Found ${searchResults.length} search results`);
-        } else {
-          console.log(`[useChat] No search results found`);
-        }
-      } catch (error) {
-        console.error("[useChat] Error during web search:", error);
-      }
-    }
-
     startTransition(async () => {
       let sessionId = currentSessionId;
-      
-      // Get the latest custom instructions directly from localStorage
       const currentCustomInstructions = typeof window !== 'undefined' 
         ? localStorage.getItem('custom-instructions') || customInstructions 
         : customInstructions;
-      
-      // Log the current custom instructions being used in this chat session
-      console.log('[useChat] Current custom instructions when sending message:', {
-        inMemory: customInstructions.substring(0, 30) + '...',
-        fromLocalStorage: typeof window !== 'undefined' 
-          ? (localStorage.getItem('custom-instructions') || '(none)').substring(0, 30) + '...'
-          : '(not available)',
-        usingForRequest: currentCustomInstructions.substring(0, 30) + '...'
-      });
-      
-      // Create a new session if needed
-      if (!sessionId && userId) {
+
+      // --- Create a new session if needed ---
+      if (!sessionId && userId && tempSessionId) {
         try {
-          // Create temporary optimistic chat history entry
-          const tempSessionId = `temp-${generateUniqueId()}`;
-          const now = new Date().toISOString();
-          const tempChatHistory: ChatHistory = {
-            id: tempSessionId,
-            title: trimmedInput.slice(0, 30) + (trimmedInput.length > 30 ? "..." : ""),
-            created_at: now,
-            updated_at: now,
-          };
-
-          // Add this temporary entry to the chat histories
-          setChatHistories((prev) => [tempChatHistory, ...prev]);
-
-          // Actually create the session on the server
-          const { sessionId: newSessionId } = await createNewChatSessionAction(userId);
-          sessionId = newSessionId;
+          // --- Signal that optimistic creation is starting ---
+          isCreatingSessionRef.current = true; 
+          console.log('[useChat] Set isCreatingSessionRef flag to true.');
           
-          // Update state and navigation
+          // --- Actually create the session on the server ---
+          console.log('[useChat] Calling createNewChatSessionAction');
+          const { sessionId: newSessionId } = await createNewChatSessionAction(userId);
+          sessionId = newSessionId; // Use the new ID for the subsequent message send
+          console.log('[useChat] New session created:', newSessionId);
+          
+          // --- Update state with the real ID ---
+          // Store the newly created ID in the ref for the subscription handler
+          recentlyCreatedSessionIdRef.current = newSessionId;
+          // Replace the temporary chat history item with one using the real ID
+          // Ensure we create a new array reference for the state update.
+          setChatHistories((prev) => {
+             const updatedHistories = prev.map((chat) =>
+                chat.id === tempSessionId ? { ...chat, id: newSessionId, title: chat.title } : chat // Ensure title persists
+             );
+             console.log(`[useChat] Manually updated chatHistories state for new session ${newSessionId}. New length: ${updatedHistories.length}`);
+             return updatedHistories; // Return the new array
+          });
+          
+          // Update current session ID and push route
           setCurrentSessionId(newSessionId);
           await sessionCookieApi.setSessionCookie(newSessionId);
           router.push(`/chat/${newSessionId}`);
+          
         } catch (error) {
           console.error("Error creating new chat session:", error);
-          // Revert temporary optimistic UI update
+          // Revert temporary optimistic UI update on error
           setChatHistories((prev) =>
-            prev.filter((chat) => !chat.id.startsWith("temp-"))
+            // Use the tempSessionId captured before the transition
+            prev.filter((chat) => chat.id !== tempSessionId) 
           );
+          // Ensure flag is reset even on error
+          isCreatingSessionRef.current = false;
+          // Optionally, handle the error state further (e.g., show toast)
+          
+          // We cannot proceed with sending the message if session creation failed
+          setIsSubmitting(false); // Reset submitting state
+          setMessages((prev) => prev.filter(msg => !msg.pending)); // Remove loading indicator
+          toast(createErrorToast("Error", "Could not create new chat session.")); // Inform user
+          return; // Exit the transition
+
+        } finally {
+          // --- Signal that optimistic creation is finished ---
+          // Reset the flag after a very short delay to allow the subscription
+          // handler to potentially ignore the immediate trigger from this creation.
+          setTimeout(() => {
+            isCreatingSessionRef.current = false;
+            // Also clear the recently created ID ref after a slightly longer delay,
+            // ensuring the subscription has had a chance to see it if needed.
+            setTimeout(() => {
+                recentlyCreatedSessionIdRef.current = null;
+                console.log('[useChat] Cleared recentlyCreatedSessionIdRef after second timeout.');
+            }, 200); // e.g., 200ms after the first timeout
+            console.log('[useChat] Reset isCreatingSessionRef flag after timeout.');
+          }, 150); // Adjust delay as needed (e.g., 100-150ms for the main flag)
         }
       }
+      // --- End of New Session Creation Block ---
 
+      // Proceed with sending the message (either to existing or new session)
       try {
-        // Debug the capabilities being sent
+        if (!sessionId) {
+          // This case should ideally not be reached if creation failed and returned early
+          throw new Error("Session ID is missing after potential creation attempt.");
+        }
+        
         console.log('[useChat] Sending message with capabilities:', {
           webSearch: isWebSearchEnabled,
-          customInstructionsLength: currentCustomInstructions?.length || 0
+          customInstructionsLength: currentCustomInstructions?.length || 0,
+          fileCount: fileAttachments.length
         });
         
-        // Send the message to the AI
+        // Send the message to the AI - Pass text and files separately
         const aiResponse = await sendMessageAction({
-          content: trimmedInput,
-          contextItems,
-          fileAttachments,
+          content: trimmedInput, // Pass the text string
+          fileAttachments, // Pass the processed file info array
           sessionId,
           userId,
           model,
           capabilities: {
-            webSearch: isWebSearchEnabled,
+            webSearch: isWebSearchEnabled, // Server action will use this flag
             customInstructions: currentCustomInstructions
           }
         });
         
-        // Debug the AI response
-        console.log('[useChat] Received AI response:', { 
-          hasResponse: !!aiResponse,
-          messageId: aiResponse?.message?.id,
-          contentLength: aiResponse?.message?.content?.length || 0
-        });
-        
         const aiMessage = aiResponse.message;
-        
-        // Update messages with the AI response
         setMessages((prev) =>
           prev.map((msg) =>
             msg.pending
-              ? {
+              ? { // Replace pending message
                   ...aiMessage,
-                  id: aiMessage.id,
-                  displayedContent: aiMessage.content
-                    .map((c) => (c.type === "text" ? c.text : ""))
-                    .join(" "),
+                  // Ensure structure matches Message type
+                  id: aiMessage.id || generateUniqueId(), 
+                  content: Array.isArray(aiMessage.content) ? aiMessage.content : [{ type: 'text', text: String(aiMessage.content || '')}],
+                  displayedContent: Array.isArray(aiMessage.content) 
+                    ? aiMessage.content.map((c) => (c.type === "text" ? c.text : "")).join(" ")
+                    : String(aiMessage.content || ''),
                   pending: false,
-                  createdAt: Date.now(),
+                  createdAt: aiMessage.createdAt || Date.now(),
+                  files: aiMessage.files || [], // Ensure files array exists
+                  role: aiMessage.role || 'assistant'
                 }
               : msg
           )
@@ -625,7 +600,7 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
         // Handle error by replacing the loading message with an error message
         setMessages((prev) => [
           ...prev.filter((msg) => !msg.pending),
-          { ...createErrorMessage(), pending: false, createdAt: Date.now() },
+          { ...createErrorMessage(), pending: false, createdAt: Date.now() }, // Ensure error message fits type
         ]);
       } finally {
         setIsSubmitting(false);
@@ -639,11 +614,7 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
     selectedFiles,
     messages,
     isWebSearchEnabled,
-    autoSearchMode,
-    chatCortex,
-    toggleWebSearch,
     currentSessionId,
-    getProcessedFiles,
     createErrorMessage,
     setIsSubmitting,
     setMessages,
@@ -652,6 +623,8 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
     setCurrentSessionId,
     sessionCookieApi,
     router,
+    customInstructions,
+    toast,
   ]);
 
   // --- handleNewChat ---

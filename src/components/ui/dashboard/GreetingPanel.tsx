@@ -63,7 +63,7 @@ const GreetingPanel: React.FC<GreetingPanelProps> = ({
   const isPro = subscriptionStatus === 'active';
 
   return (
-    <div className="row-span-2 flex flex-col justify-center items-start border-r dark:border-[#ffffff]/10 border-black/10 p-8 relative dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 backdrop-blur-sm transition-all duration-300">
+    <div className="row-span-3 flex flex-col justify-center items-start border-r dark:border-[#ffffff]/10 border-black/10 p-8 relative dark:bg-[#0E0E0E]/70 bg-[#F1F1F1]/70 backdrop-blur-sm transition-all duration-300">
       
       <ThemeSwitcher />
 
@@ -73,8 +73,8 @@ const GreetingPanel: React.FC<GreetingPanelProps> = ({
       </div>
 
       {/* Dynamic Greeting (pt-BR) */}
-      <h1 style={{ fontStretch: "125%" }} className={`${MonaSans.className} text-gray-900 text-4xl leading-tight font-[900] uppercase mb-9 text-left dark:text-white`}>
-        {greeting} <br /> {userName} {/* Use the dynamic greeting state */}
+      <h1 style={{ fontStretch: "125%" }} className={`${MonaSans.className} text-gray-900 text-5xl leading-tight font-[900] uppercase mb-9 text-left dark:text-white`}>
+        {greeting} <br /> {userName} 
       </h1>
       
       {/* Subscription Status */}

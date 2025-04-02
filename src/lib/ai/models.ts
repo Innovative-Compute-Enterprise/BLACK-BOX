@@ -4,7 +4,13 @@ import { generateResponse as generateGPT4MINI } from '@/src/lib/ai/response/chat
 import { generateResponse as generateGEMINI } from '@/src/lib/ai/response/gemini/generateResponse'; 
 import { generateResponse as generateGEMINI_THINK } from '@/src/lib/ai/response/gemini/generateResponseThink'; 
 import { generateResponse as generateSONNET3 } from '@/src/lib/ai/response/claude/generateResponse'; 
-import { getSystemPrompt } from './prompts'; 
+import { getCustomInstructions, createSystemPrompt } from './prompts'; 
+
+// Helper function to get the system prompt string based on active personality
+const getActiveSystemPrompt = (): string => {
+  const instructions = getCustomInstructions();
+  return createSystemPrompt(instructions);
+};
 
 export const modelsConfig: AIModelConfig[] = [
   {
@@ -13,7 +19,7 @@ export const modelsConfig: AIModelConfig[] = [
     description: 'Feito para tarefas gigantes, com enfase em rapidez e volume.',
     acceptsFiles: true,
     handler: generateGEMINI_THINK as ModelHandler,
-    systemPrompt: getSystemPrompt,
+    systemPrompt: getActiveSystemPrompt,
   },
   {
     id: 'gemini',
@@ -21,7 +27,7 @@ export const modelsConfig: AIModelConfig[] = [
     description: 'Excepcional com para tarefas complexas e de grande volume de dados',
     acceptsFiles: true,
     handler: generateGEMINI as ModelHandler, 
-    systemPrompt: getSystemPrompt,
+    systemPrompt: getActiveSystemPrompt,
   },
   {
     id: 'gpt-4o-mini',
@@ -29,7 +35,7 @@ export const modelsConfig: AIModelConfig[] = [
     description: 'Excepcional para tarefas diarias.',
     acceptsFiles: true,
     handler: generateGPT4MINI as ModelHandler, 
-    systemPrompt: getSystemPrompt,
+    systemPrompt: getActiveSystemPrompt,
   },
   {
     id: 'claude-sonnet-3.5',
@@ -37,6 +43,6 @@ export const modelsConfig: AIModelConfig[] = [
     description: 'Especializado para tarefas super dificeis, como programacao, matematica.',
     acceptsFiles: true,
     handler: generateSONNET3 as ModelHandler, 
-    systemPrompt: getSystemPrompt,
+    systemPrompt: getActiveSystemPrompt,
   },
 ];

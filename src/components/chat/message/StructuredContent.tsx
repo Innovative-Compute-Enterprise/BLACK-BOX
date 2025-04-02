@@ -56,37 +56,67 @@ const MarkdownContent: React.FC<{ content: string }> = ({ content }) => {
 // Add a separate SourcesSection component
 const SourcesSection: React.FC<{ sources: Array<{title: string, url: string}> }> = ({ sources }) => {
   const [showSources, setShowSources] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  const toggleSources = () => {
+    setIsAnimating(true);
+    setShowSources(!showSources);
+  };
   
   return (
     <div className="my-3 text-sm">
       <button 
-        onClick={() => setShowSources(!showSources)}
-        className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        onClick={toggleSources}
+        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/40 transition-colors border border-blue-200 dark:border-blue-800/50 font-medium shadow-sm"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-          <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
-          <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          viewBox="0 0 20 20" 
+          fill="none" 
+          className={`w-3.5 h-3.5 transition-transform duration-300 ${showSources ? 'rotate-180' : ''}`}
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="10" cy="10" r="7.5" />
+          <path d="M3.5 10h13" />
+          <path d="M10 2.5c1.94 2.5 3.25 6 3.25 7.5s-1.31 5-3.25 7.5" />
+          <path d="M10 2.5C8.06 5 6.75 8.5 6.75 10s1.31 5 3.25 7.5" />
         </svg>
-        Web sources
+        {showSources ? "Hide sources" : "Web sources"}
       </button>
       
-      {showSources && (
-        <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Sources</div>
-          {sources.map((source, sourceIndex) => (
-            <div key={sourceIndex} className="ml-2 mb-1">
-              <a 
-                href={source.url} 
-                className="text-blue-600 dark:text-blue-400 hover:underline text-xs"
-                target="_blank"
-                rel="noopener noreferrer"
+      <div 
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${showSources ? 'max-h-96 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}
+        onTransitionEnd={() => setIsAnimating(false)}
+      >
+        <div className="p-3 bg-blue-50 dark:bg-slate-800 rounded-md border border-blue-200 dark:border-slate-700 shadow-sm">
+          <div className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-2">Sources</div>
+          <div className="space-y-1.5">
+            {sources.map((source, sourceIndex) => (
+              <div 
+                key={sourceIndex} 
+                className="flex items-center transition-opacity duration-300"
+                style={{ 
+                  opacity: showSources && !isAnimating ? 1 : 0,
+                  transitionDelay: `${sourceIndex * 50}ms`
+                }}
               >
-                {source.title || source.url}
-              </a>
-            </div>
-          ))}
+                <span className="inline-block w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mr-2"></span>
+                <a 
+                  href={source.url} 
+                  className="text-blue-600 dark:text-blue-400 hover:underline text-xs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {source.title || source.url}
+                </a>
+              </div>
+            ))}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

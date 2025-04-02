@@ -9,7 +9,6 @@ export default async function Welcome() {
     <section className="flex flex-col md:flex-row min-h-screen w-full">
 
       {/* Left Section: Text Content + Icon */}
-      {/* Added text-black for light mode default, dark:text-white for dark mode */}
       <div className="w-full md:w-1/2 flex flex-col justify-center p-8 md:p-16 lg:p-24 order-2 md:order-1 text-black dark:text-white">
         {/* Container for icon + text block */}
         <div className="max-w-md mx-auto md:mx-0 flex flex-col items-center md:items-start"> {/* Center items on mobile, start on desktop */}
@@ -25,7 +24,6 @@ export default async function Welcome() {
             Welcome to <br /> Black Box
           </h1>
 
-          {/* Subtext */}
           {/* Adjusted text color for light/dark modes */}
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 text-center md:text-left">
             Brought to you by <Link href="https://blackbox.com" className="underline hover:text-black dark:hover:text-white">ICE</Link>.
@@ -42,8 +40,6 @@ export default async function Welcome() {
             <Button
               variant="flat" // Assuming 'flat' allows className overrides or you have specific variants
               type="button"
-              // Light Mode: Black background, White text
-              // Dark Mode: White background, Black text
               className="w-full py-3 text-lg font-medium rounded-md transition-colors duration-200
                          bg-black text-white hover:bg-zinc-800
                          dark:bg-white dark:text-black dark:hover:bg-gray-200"
@@ -57,11 +53,9 @@ export default async function Welcome() {
             <Button
               variant="flat" // Assuming 'flat' allows className overrides or you have specific variants
               type="button"
-              // Light Mode: Black text, Black border, transparent bg
-              // Dark Mode: White text, Gray border, transparent bg
               className="w-full py-3 text-lg font-medium rounded-md border transition-colors duration-200
-                         border-black text-black hover:bg-zinc-800
-                         dark:border-gray-600 dark:text-white dark:hover:bg-gray-800 dark:hover:border-gray-500"
+                         border-black  hover:bg-zinc-800
+                         dark:border-gray-600 dark:text-black text-white dark:hover:bg-gray-200 dark:hover:border-gray-800"
             >
               Criar conta
             </Button>

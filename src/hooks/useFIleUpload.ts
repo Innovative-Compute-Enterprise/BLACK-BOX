@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { createClient } from '@/src/utils/supabase/client';
 import { convertImageToWebp } from '@/src/utils/chat/convertImageToWebp';
 import { MessageContent } from '@/src/types/chat';
+import { useChatStore } from '@/src/hooks/useChatStore';
 
 type FileType = 'image' | 'document' | 'spreadsheet' | 'markdown' | 'pdf' | 'other';
 
@@ -64,6 +65,7 @@ export const useFileUpload = (userId: string) => {
   const supabase = createClient();
   const [selectedFiles, setSelectedFiles] = useState<ProcessedFile[]>([]);
   const [processingQueue, setProcessingQueue] = useState<string[]>([]);
+  const zustandSetSelectedFiles = useChatStore((state) => state.setSelectedFiles);
 
   const generateId = () => `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
@@ -227,6 +229,7 @@ export const useFileUpload = (userId: string) => {
 
   // Process a single file immediately upon upload
   const processFile = useCallback(async (file: File, indexGetter: (prev: ProcessedFile[]) => number) => {
+    let processedResult: ProcessedFile | null = null;
     try {
       console.log(`[useFileUpload] Starting processing for file: ${file.name}, type: ${file.type}, size: ${file.size}`);
       setProcessingQueue(prev => [...prev, file.name]);
@@ -239,43 +242,61 @@ export const useFileUpload = (userId: string) => {
       }
       
       // Process the file
-      const processedFile = await processor.process(file);
-      console.log(`[useFileUpload] File processed successfully: ${file.name}`, processedFile);
+      const processedFileData = await processor.process(file);
+      console.log(`[useFileUpload] File processed successfully: ${file.name}`, processedFileData);
       
+      // Update internal state
       setSelectedFiles(prev => {
         const newFiles = [...prev];
         const index = indexGetter(prev);
         if (index >= 0 && index < newFiles.length) {
-          newFiles[index] = {
+          processedResult = {
             ...newFiles[index],
-            processedFile,
+            processedFile: processedFileData,
             isProcessing: false,
             error: undefined
           };
+          newFiles[index] = processedResult;
         }
         return newFiles;
       });
     } catch (error) {
       console.error(`[useFileUpload] Error processing file ${file.name}:`, error);
       
-      // Update the file with the error
+      // Update internal state with the error
       setSelectedFiles(prev => {
         const newFiles = [...prev];
         const index = indexGetter(prev);
         if (index >= 0 && index < newFiles.length) {
-          newFiles[index] = {
+          processedResult = {
             ...newFiles[index],
             isProcessing: false,
             error: error.message || 'Error processing file'
           };
+          newFiles[index] = processedResult;
         }
         return newFiles;
       });
     } finally {
+      // Update Zustand store with the final result (success or error)
+      if (processedResult) {
+        const finalResult = processedResult;
+        zustandSetSelectedFiles(prevGlobal => {
+           const globalIndex = prevGlobal.findIndex(f => f.originalFile.name === finalResult.originalFile.name && f.isProcessing);
+           if (globalIndex !== -1) {
+             const newGlobalFiles = [...prevGlobal];
+             newGlobalFiles[globalIndex] = finalResult;
+             console.log('[useFileUpload] Updating Zustand store with final file state for:', finalResult.originalFile.name);
+             return newGlobalFiles;
+           }
+           console.warn('[useFileUpload] Could not find matching processing file in Zustand store for:', finalResult.originalFile.name);
+           return prevGlobal; // Return previous state if no match found
+        });
+      }
       // Always remove from processing queue
       setProcessingQueue(prev => prev.filter(name => name !== file.name));
     }
-  }, [getFileProcessor]);
+  }, [getFileProcessor, zustandSetSelectedFiles]);
 
   // Handle file selection and trigger immediate processing
   const handleFilesSelected = useCallback((files: FileList) => {
@@ -289,7 +310,9 @@ export const useFileUpload = (userId: string) => {
         isProcessing: false,
         error: 'User authentication required for file upload'
       }));
+      // Update both internal and Zustand state with errors
       setSelectedFiles(prev => [...prev, ...filesWithErrors]);
+      zustandSetSelectedFiles(prev => [...prev, ...filesWithErrors]);
       return;
     }
     
@@ -300,17 +323,21 @@ export const useFileUpload = (userId: string) => {
     }));
     
     console.log(`Adding ${filesArray.length} files to be processed`);
+    // Update both internal and Zustand state with placeholders
     setSelectedFiles(prev => [...prev, ...filesArray]);
+    zustandSetSelectedFiles(prev => [...prev, ...filesArray]);
     
     // Process each file immediately
     filesArray.forEach((fileWrapper, index) => {
       processFile(fileWrapper.originalFile, prev => prevLength + index);
     });
-  }, [selectedFiles.length, processFile, userId]);
+  }, [selectedFiles.length, processFile, userId, zustandSetSelectedFiles]);
 
   const handleRemoveFile = useCallback((index: number) => {
+    // Update both internal and Zustand state
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  }, []);
+    zustandSetSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  }, [zustandSetSelectedFiles]);
 
   // Return the processed files for message sending
   const getProcessedFiles = useCallback((): FileAttachment[] => {
@@ -352,7 +379,7 @@ export const useFileUpload = (userId: string) => {
   const getFileType = useCallback((file: ProcessedFile): FileType => {
     const processor = getFileProcessor(file.originalFile);
     return processor.type;
-  }, []);
+  }, [getFileProcessor]);
 
   const isProcessingAny = processingQueue.length > 0;
 
@@ -375,7 +402,6 @@ export const useFileUpload = (userId: string) => {
   // Return additional debugging helpers
   return {
     selectedFiles,
-    setSelectedFiles,
     handleFilesSelected,
     handleRemoveFile,
     getProcessedFiles,
@@ -383,6 +409,9 @@ export const useFileUpload = (userId: string) => {
     getFileType,
     isProcessingFiles: isProcessingAny,
     getFileStatus, // New debug helper
-    clearAllFiles: useCallback(() => setSelectedFiles([]), [setSelectedFiles]) // New utility method
+    clearAllFiles: useCallback(() => {
+      setSelectedFiles([]); // Clear internal state
+      zustandSetSelectedFiles([]); // Clear Zustand state
+    }, [setSelectedFiles, zustandSetSelectedFiles]) // Add dependencies
   };
 };

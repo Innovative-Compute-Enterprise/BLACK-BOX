@@ -3,14 +3,14 @@
 import React, { useContext, useMemo, useEffect, useRef, useCallback } from "react";
 import { ChatContext } from "@/src/context/ChatContext";
 import ModelSelector from "@/src/components/chat/ModelSelector";
-import TextInput from "../chat/dock/input";
-import SendButton from "../chat/dock/submit";
-import FileUploadButton from "../chat/dock/upload-button";
-import SelectedFilesDisplay from "../chat/dock/uploaded-files";
+import TextInput from "./dock/input";
+import SendButton from "./dock/submit";
+import FileUploadButton from "./dock/upload-button";
+import SelectedFilesDisplay from "./dock/uploaded-files";
 import WebSearchButton from "./dock/web-search";
 import { cortex } from "@/src/lib/ai/cortex";
 import { motion, AnimatePresence } from 'motion/react';
-import { MonaSans } from "@/src/styles/fonts/font";
+import {MonaSans} from "@/src/styles/fonts/font";
 import dynamic from 'next/dynamic';
 
 const NoSSR = dynamic<{ children: React.ReactNode }>(
@@ -92,7 +92,7 @@ const InputArea = React.memo(({
 }: InputAreaProps) => (
   <div className="flex flex-col dark:border-[#ffffff]/20 border-black/10 border bg-white dark:bg-black p-3 rounded-3xl shadow-[0_0_12px_rgba(0,0,0,0.10)] dark:shadow-[0_0_12px_rgba(255,255,255,0.11)]">
     <div className="flex items-start">
-      <div className="flex-1 min-w-0 px-1.5 pt-1">
+      <div className="flex-1 min-w-0 px-2.5 py-1.5">
         <TextInput input={input} setInput={setInput} handleSendMessage={handleSendMessage} rows={2} />
       </div>
     </div>
@@ -209,8 +209,8 @@ function ChatDock(props: ChatDockProps) {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.3, ease: 'easeOut' }}
           >
-            <p className="text-3xl font-medium text-center mb-6 text-zinc-700 dark:text-zinc-300">
-              Como posso ajudar hoje?
+              <p style={{ fontStretch: '125%' }} className={`${MonaSans.className} text-3xl font-[900] uppercase text-center mb-16 text-zinc-700 dark:text-zinc-300`}>
+              Como posso ajudar?
             </p>
           </motion.div>
 
@@ -218,7 +218,7 @@ function ChatDock(props: ChatDockProps) {
             initial={isNewChatTransition ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.7, ease: 'easeOut', delay: isNewChatTransition ? 0 : 0.3 }}
-            className="max-w-3xl mx-auto px-4 py-3 w-full mb-[10vh]"
+            className="max-w-3xl mx-auto px-4 w-full mb-[20vh]"
           >
             <FilesDisplay files={selectedFiles} onRemoveFile={onRemoveFile} />
             <InputArea {...memoizedInputAreaProps} />
@@ -236,10 +236,13 @@ function ChatDock(props: ChatDockProps) {
       exit={{ opacity: 0 }}
       className="sticky bottom-0 overflow-visible dark:bg-black bg-white z-0"
     >
-      <div className="max-w-3xl mx-auto pb-2 w-full relative">
+      <div className="max-w-3xl mx-auto pb-1.5 w-full relative">
         <FilesDisplay files={selectedFiles} onRemoveFile={onRemoveFile} />
         <InputArea {...memoizedInputAreaProps} />
       </div>
+      <p className="text-xs text-center text-zinc-400 dark:text-zinc-500 pb-1.5">
+       Gerado por IA , sempre verifique a informação.
+      </p>
     </motion.div>
   ), [selectedFiles, onRemoveFile, memoizedInputAreaProps]);
 

@@ -89,7 +89,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
         const isImage = file.mime_type.startsWith("image/");
         const fileSize = formatFileSize(file.size);
 
-        // For image files, show them with the same styling as other images
         if (isImage && file.url) {
           return (
             <div
@@ -116,7 +115,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
           );
         }
 
-        // For non-image files
         return (
           <div
             key={file.name}
@@ -337,10 +335,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
           };
         });
       
-      // Combine files but avoid duplicates
       const allFiles = [...explicitFiles];
       
-      // Add file content items if they don't already exist in explicitFiles
       fileContentItems.forEach(file => {
         const fileExists = allFiles.some(f => f.url === file.url);
         if (!fileExists) {
@@ -368,14 +364,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
     // Helper function to get the right content to display
     const getContent = useCallback(() => {
       try {
-        // Debug the message content
         console.log(`[MessageBubble] Getting content for message:`, message.id, message.content);
         
-        // Handle different content types
         if (message.pending) {
-          // Show typing indicator for pending messages
           return (
-            <div className="typing-indicator" aria-label="AI is typing">
+            <div className="typing-indicator text-sm text-gray-500 dark:text-gray-400" aria-label="AI is typing">
               <span></span>
               <span></span>
               <span></span>
