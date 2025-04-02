@@ -204,7 +204,7 @@ export const useFileUpload = (userId: string) => {
     }
   ];
 
-  const getFileProcessor = (file: File): FileProcessor => {
+  const getFileProcessor = useCallback((file: File): FileProcessor => {
     const processor = fileProcessors.find(p => p.mimeTypes.includes(file.type));
     
     if (processor) {
@@ -225,7 +225,7 @@ export const useFileUpload = (userId: string) => {
         isImage: false
       })
     };
-  };
+  }, []);
 
   // Process a single file immediately upon upload
   const processFile = useCallback(async (file: File, indexGetter: (prev: ProcessedFile[]) => number) => {

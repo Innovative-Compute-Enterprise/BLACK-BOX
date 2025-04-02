@@ -226,6 +226,7 @@ function ChatDock(props: ChatDockProps) {
         </>
       </NoSSR>
     </motion.div>
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [userName, isNewChatTransition, selectedFiles, onRemoveFile, memoizedInputAreaProps]);
 
   const renderRegularContent = useMemo(() => (
