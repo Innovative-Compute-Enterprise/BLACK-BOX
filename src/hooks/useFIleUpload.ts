@@ -296,7 +296,7 @@ export const useFileUpload = (userId: string) => {
       // Always remove from processing queue
       setProcessingQueue(prev => prev.filter(name => name !== file.name));
     }
-  }, [getFileProcessor, zustandSetSelectedFiles, userId]);
+  }, [getFileProcessor, zustandSetSelectedFiles]);
 
   // Handle file selection and trigger immediate processing
   const handleFilesSelected = useCallback((files: FileList) => {
@@ -331,7 +331,7 @@ export const useFileUpload = (userId: string) => {
     filesArray.forEach((fileWrapper, index) => {
       processFile(fileWrapper.originalFile, prev => prevLength + index);
     });
-  }, [selectedFiles.length, processFile, userId, zustandSetSelectedFiles]);
+  }, [selectedFiles.length, processFile, zustandSetSelectedFiles]);
 
   const handleRemoveFile = useCallback((index: number) => {
     // Update both internal and Zustand state

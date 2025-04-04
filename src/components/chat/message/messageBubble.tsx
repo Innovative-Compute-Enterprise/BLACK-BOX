@@ -96,10 +96,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
               className="cursor-pointer overflow-hidden rounded-lg shadow-md mt-2"
               onClick={() => openImageModal(file.url)}
             >
-              <img 
+              <Image 
                 src={file.url}
                 alt={file.name}
                 className="max-w-full w-full h-auto rounded-lg hover:opacity-90 transition-opacity"
+                unoptimized={true}
+                width={500}
+                height={300}
+                layout="responsive"
                 onError={(e) => {
                   console.error("Failed to load attached image");
                   const target = e.target as HTMLImageElement;
@@ -465,10 +469,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
                         className="cursor-pointer overflow-hidden rounded-lg shadow-md max-w-[80%]"
                         onClick={() => openImageModal(contentItem.image_url.url)}
                       >
-                        <img
+                        <Image
                           src={contentItem.image_url.url}
                           alt="User uploaded image"
                           className="w-full h-auto rounded-lg hover:opacity-90 transition-opacity"
+                          unoptimized={true}
+                          width={500}
+                          height={300}
+                          layout="responsive"
                           onError={(e) => {
                             console.error("Failed to load user image with regular img tag");
                             // Try with Image component as backup
@@ -600,10 +608,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
                 className="my-3 cursor-pointer overflow-hidden rounded-lg shadow-md max-w-2xl" 
                 onClick={() => openImageModal((contentItem as any).image_url.url)}
               >
-                <img
+                <Image
                   src={(contentItem as any).image_url.url}
                   alt="AI generated image"
                   className="max-w-full w-full h-auto rounded-lg hover:opacity-90 transition-opacity"
+                  unoptimized={true}
+                  width={600}
+                  height={400}
+                  layout="responsive"
                   onError={(e) => {
                     console.error("Failed to load AI image");
                     const target = e.target as HTMLImageElement;
@@ -651,10 +663,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
               </div>
             }
           >
-            <img 
+            <Image 
               src={selectedImage} 
               alt="Full size image" 
               className="max-w-full max-h-[85vh] object-contain"
+              unoptimized={true}
+              width={1000}
+              height={800}
+              layout="intrinsic"
+              objectFit="contain"
               onError={() => console.error("Modal image failed to load:", selectedImage)}
             />
           </ErrorBoundary>
