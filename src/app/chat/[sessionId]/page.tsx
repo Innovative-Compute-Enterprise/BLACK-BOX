@@ -5,6 +5,7 @@ import { createClient } from '@/src/utils/supabase/server';
 import { Suspense } from 'react';
 import Loading from '@/src/components/chat/message/loading'; 
 import { getUserDetails } from '@/src/utils/supabase/queries';
+import { getSubscription } from '@/src/utils/supabase/queries';
 
 interface PageProps {
   params: Promise<{ sessionId: string }>; 
@@ -21,12 +22,15 @@ export default async function ChatSessionPage({ params }: { params: Promise<{ se
     redirect('/0auth');
   }
 
-  // Fetch user details for the user name
-  const userDetails = await getUserDetails(supabase);
+  // Fetch additional user details and subscription
+  const [userDetails, subscription] = await Promise.all([
+    getUserDetails(supabase),
+    getSubscription(supabase)
+  ]);
 
   return (
     <Suspense fallback={<Loading />}>
-        <Chat sessionId={sessionId} userName={userDetails?.full_name ?? ''} />
+        <Chat sessionId={sessionId} userName={userDetails?.full_name ?? ''} subscription={subscription} />
     </Suspense>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { createClient } from '@/src/utils/supabase/client';
 import { convertImageToWebp } from '@/src/utils/chat/convertImageToWebp';
 import { MessageContent } from '@/src/types/chat';
@@ -69,13 +69,13 @@ export const useFileUpload = (userId: string) => {
 
   const generateId = () => `file-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-  const uploadFile = async (file: File, folder: string = 'uploads'): Promise<string> => {
+  const uploadFile = useCallback(async (file: File, folder: string = 'uploads'): Promise<string> => {
     if (!userId) {
       console.error('No user ID provided for file upload');
       throw new Error('Authentication required for file upload');
     }
     
-    console.log(`Uploading file: ${file.name} to ${folder} folder, size: ${file.size} bytes`);
+    console.log(`[useFileUpload] uploadFile called. userId: ${userId}. Uploading ${file.name} to ${folder}`);
     const fileName = createUploadFileName(file.name);
     const filePath = `${userId}/${folder}/${fileName}`;
     
@@ -104,9 +104,9 @@ export const useFileUpload = (userId: string) => {
       console.error(`File upload failed for ${fileName}:`, error);
       throw error;
     }
-  };
+  }, [userId, supabase.storage]);
 
-  const fileProcessors: FileProcessor[] = [
+  const fileProcessors = useMemo((): FileProcessor[] => [
     {
       type: 'image',
       mimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
@@ -202,7 +202,7 @@ export const useFileUpload = (userId: string) => {
         };
       }
     }
-  ];
+  ], [uploadFile]);
 
   const getFileProcessor = useCallback((file: File): FileProcessor => {
     const processor = fileProcessors.find(p => p.mimeTypes.includes(file.type));
@@ -225,7 +225,7 @@ export const useFileUpload = (userId: string) => {
         isImage: false
       })
     };
-  }, []);
+  }, [fileProcessors]);
 
   // Process a single file immediately upon upload
   const processFile = useCallback(async (file: File, indexGetter: (prev: ProcessedFile[]) => number) => {
@@ -296,7 +296,7 @@ export const useFileUpload = (userId: string) => {
       // Always remove from processing queue
       setProcessingQueue(prev => prev.filter(name => name !== file.name));
     }
-  }, [getFileProcessor, zustandSetSelectedFiles]);
+  }, [getFileProcessor, zustandSetSelectedFiles, userId]);
 
   // Handle file selection and trigger immediate processing
   const handleFilesSelected = useCallback((files: FileList) => {

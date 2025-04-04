@@ -46,11 +46,13 @@ interface FileUploadButtonProps {
   onFilesSelected: (files: FileList) => void;
   maxFileSize?: number;
   onInputFocus?: () => void;
+  disabled?: boolean;
 }
 
 const FileUploadButton: React.FC<FileUploadButtonProps> = ({
   onFilesSelected,
   maxFileSize = 10 * 1024 * 1024,
+  disabled = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string>('');
@@ -355,9 +357,10 @@ const FileUploadButton: React.FC<FileUploadButtonProps> = ({
       />
      <button
         onClick={() => setIsPopupOpen(true)}
-        className="cursor-pointer dark:border-[#ffffff]/20 border-black/20 border text-black dark:text-white rounded-full p-1 focus:outline-none dark:hover:bg-zinc-900 hover:bg-zinc-100"
+        className="cursor-pointer dark:border-[#ffffff]/20 border-black/20 border text-black dark:text-white rounded-full p-1 focus:outline-none dark:hover:bg-zinc-900 hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
         title="Add files"
         aria-label="Add files"
+        disabled={disabled}
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
              viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">

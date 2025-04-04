@@ -1,7 +1,6 @@
 // app/page.tsx
 import React from 'react';
 import { createClient } from '@/src/utils/supabase/server';
-import Header from '@/src/components/ui/header/Header';
 import { redirect } from 'next/navigation';
 import Dashboard from '@/src/components/ui/dashboard/Dashboard';
 
@@ -35,7 +34,6 @@ export default async function Home() {
 
   return (
     <main className="antialiased">
-      <Header />
       <section className="flex flex-col justify-start items-center min-h-screen px-4 pt-[10%]">
         <Dashboard 
           userName={userName}

@@ -2,7 +2,6 @@
 import { cookies } from "next/headers";
 import { SidebarProvider } from "@/src/components/shadcn/sidebar";
 import { ChatProvider } from "@/src/context/ChatContext";
-import { ChatLayoutClient } from "./chat-layout-client";
 import { createClient } from "@/src/utils/supabase/server";
 import { getSubscription } from "@/src/utils/supabase/queries";
 
@@ -26,19 +25,13 @@ export default async function ChatLayout({
     subscription = await getSubscription(supabase);
   } catch (error) {
     console.error("Error fetching subscription:", error);
-    // Handle error appropriately, maybe set a default or show an error message
   }
 
   return (
     <ChatProvider>
-      <SidebarProvider defaultOpen={defaultOpen}>
-        <ChatLayoutClient
-          sessionId={params.sessionId}
-          subscription={subscription}
-        >
+
           {children}
-        </ChatLayoutClient>
-      </SidebarProvider>
+
     </ChatProvider>
   );
 }

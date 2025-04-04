@@ -17,32 +17,50 @@ interface StructuredContentItem {
   alt?: string;
   caption?: string;
   sources?: Array<{title: string, url: string}>;
+  // Add potential table structure if needed in the future
+  headers?: string[];
+  rows?: string[][];
 }
+
+// Define the type for the markdown components object
+type MarkdownComponentType = React.ComponentType<any> | keyof JSX.IntrinsicElements;
+type MarkdownComponents = { [key: string]: MarkdownComponentType };
 
 interface StructuredContentProps {
   content: StructuredContentItem[];
+  // Accept markdown components as a prop
+  markdownComponents?: MarkdownComponents;
 }
 
 // Reusable Markdown component with consistent styling and error handling
-const MarkdownContent: React.FC<{ content: string }> = ({ content }) => {
+// Updated to accept and use markdownComponents prop
+const MarkdownContent: React.FC<{ content: string; components?: MarkdownComponents }> = ({ content, components }) => {
   try {
+    // Merge default overrides with passed components
+    const mergedComponents: MarkdownComponents = {
+      // Default link styling
+      a: (props) => (
+        <a 
+          {...props} 
+          className="text-blue-600 dark:text-blue-400 hover:underline"
+          target="_blank" 
+          rel="noopener noreferrer"
+          aria-label={`External link to ${props.href}`}
+        />
+      ),
+      // Override p tag to prevent nesting issues when markdown is inside other elements,
+      // but only if no specific p component is passed in.
+      ...(!components?.p && { p: ({ children }) => <>{children}</> }),
+      // Include passed components, potentially overriding defaults if keys match
+      ...(components || {}),
+    };
+
     return (
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSanitize]}
-        components={{
-          a: (props) => (
-            <a 
-              {...props} 
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-              target="_blank" 
-              rel="noopener noreferrer"
-              aria-label={`External link to ${props.href}`}
-            />
-          ),
-          // Override p tag to prevent nesting issues
-          p: ({ children }) => <>{children}</>
-        }}
+        // Use the merged components which includes styles from MessageBubble
+        components={mergedComponents}
       >
         {content}
       </ReactMarkdown>
@@ -121,124 +139,119 @@ const SourcesSection: React.FC<{ sources: Array<{title: string, url: string}> }>
   );
 };
 
-const StructuredContent: React.FC<StructuredContentProps> = ({ content }) => {
+// Pass markdownComponents prop down
+const StructuredContent: React.FC<StructuredContentProps> = ({ content, markdownComponents }) => {
   if (!content || !Array.isArray(content)) {
     return <div className="text-gray-500 italic">No content available</div>;
   }
+
+  // No need to extract components here, MarkdownContent handles it
 
   return (
     <div className="structured-content" role="article">
       {content.map((item, index) => {
         try {
-          // Paragraph
+          // Paragraph: Pass markdownComponents to MarkdownContent
           if (item.type === 'paragraph' && item.content) {
+            // Use a simple div wrapper. Styling is handled by MarkdownContent
             return (
-              <div key={index} className="my-3 text-base leading-loose tracking-wider">
-                <MarkdownContent content={item.content} />
+              <div key={index}>
+                {/* Pass components down */}
+                <MarkdownContent content={item.content} components={markdownComponents} />
               </div>
             );
           }
           
-          // Heading
+          // Heading: Pass markdownComponents to MarkdownContent
           if (item.type === 'heading' && item.content && item.level) {
-            const HeadingTag = `h${item.level}` as keyof JSX.IntrinsicElements;
-            const headingClasses = {
-              h1: "text-3xl font-bold mt-6 mb-4 border-b pb-2",
-              h2: "text-2xl font-bold mt-4 mb-3 border-b pb-2",
-              h3: "text-xl font-semibold mt-3 mb-2",
-              h4: "text-lg font-semibold mt-3 mb-2",
-              h5: "text-base font-semibold mt-2 mb-1",
-              h6: "text-sm font-semibold mt-2 mb-1"
-            };
-            
+            // Use a simple div wrapper. Styling is handled by MarkdownContent
             return (
-              <HeadingTag 
-                key={index} 
-                className={headingClasses[`h${item.level}`]}
-                id={`heading-${index}`}
-              >
-                <MarkdownContent content={item.content} />
-              </HeadingTag>
+              <div key={index}>
+                {/* Pass components down */}
+                <MarkdownContent content={item.content} components={markdownComponents} />
+              </div>
             );
           }
           
-          // List
+          // List: Pass markdownComponents to MarkdownContent
           if (item.type === 'list' && item.items) {
-            const ListTag = item.style === 'numbered' ? 'ol' : 'ul';
-            const listClasses = {
-              ol: "list-decimal pl-6 my-2",
-              ul: "list-disc pl-6 my-2"
-            };
-            
+             // Use a simple div wrapper. Styling is handled by MarkdownContent
+             // We just need to format the markdown correctly here
+             const listMarkdown = item.items.map((listItem, i) => {
+               const prefix = item.style === 'numbered' ? `${i + 1}.` : '*';
+               return `${prefix} ${listItem}`;
+             }).join('\n');
+
             return (
-              <ListTag 
-                key={index} 
-                className={listClasses[ListTag]}
-                role={item.style === 'numbered' ? 'list' : 'list'}
-              >
-                {item.items.map((listItem: string, listItemIndex: number) => (
-                  <li key={listItemIndex} className="my-2">
-                    <MarkdownContent content={listItem} />
-                  </li>
-                ))}
-              </ListTag>
+              <div key={index}>
+                {/* Pass components down */}
+                <MarkdownContent content={listMarkdown} components={markdownComponents} />
+              </div>
             );
           }
           
-          // Code Block
+          // Code Block: Pass markdownComponents to MarkdownContent
           if (item.type === 'code' && item.content) {
+             // Use a simple div wrapper. Styling is handled by MarkdownContent
             return (
-              <pre key={index} className="bg-gray-100 dark:bg-gray-800 rounded-md p-4 my-4 overflow-x-auto">
-                <code className="text-sm" tabIndex={0}>
-                  {item.content}
-                </code>
-              </pre>
+              <div key={index}>
+                 {/* Pass components down, wrap content in markdown code syntax */}
+                <MarkdownContent content={`\`\`\`\n${item.content}\n\`\`\``} components={markdownComponents} />
+              </div>
             );
           }
           
-          // Blockquote
+          // Blockquote: Pass markdownComponents to MarkdownContent
           if (item.type === 'blockquote' && item.content) {
+             // Use a simple div wrapper. Styling is handled by MarkdownContent
+             // Prepend blockquote markdown syntax
+            const blockquoteMarkdown = item.content.split('\n').map(line => `> ${line}`).join('\n');
             return (
-              <blockquote 
-                key={index} 
-                className="border-l-4 pl-4 italic text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md my-4 py-2"
-              >
-                <MarkdownContent content={item.content} />
-              </blockquote>
+              <div key={index}>
+                {/* Pass components down */}
+                <MarkdownContent content={blockquoteMarkdown} components={markdownComponents} />
+              </div>
             );
           }
           
-          // Image
+          // Image: Render directly, potentially using passed img component via MarkdownContent
           if (item.type === 'image' && item.url) {
+            // Format as markdown image and let MarkdownContent handle it
+            const imageMarkdown = `![${item.alt || 'Content image'}](${item.url})`;
             return (
-              <figure key={index} className="my-4">
-                <Image 
-                  src={item.url}
-                  alt={item.alt || 'Content image'}
-                  className="max-w-full rounded-md"
-                  width={600}
-                  height={400}
-                  loading="lazy"
-                  unoptimized={true} // For external images
-                  onError={() => {
-                    console.error(`Failed to load image: ${item.url}`);
-                    // Cannot use onError with Next.js Image, we'll handle fallbacks differently
-                  }}
-                />
+              <figure key={index} className="my-5"> {/* Keep figure for semantics */}
+                {/* Pass components down */}
+                <MarkdownContent content={imageMarkdown} components={markdownComponents} />
                 {item.caption && (
-                  <figcaption className="text-sm text-center text-gray-500 mt-1">{item.caption}</figcaption>
+                  <figcaption className="text-sm text-center text-gray-600 dark:text-gray-400 mt-2">{item.caption}</figcaption>
                 )}
               </figure>
             );
           }
           
-          // Sources section
+          // Sources section (Render directly as before)
           if (item.type === 'sources' && item.sources) {
             return <SourcesSection key={index} sources={item.sources} />;
           }
           
-          // Default case - render as text with error handling
-          return <p key={index} className="text-gray-600">{JSON.stringify(item)}</p>;
+          // Horizontal Rule: Let MarkdownContent handle it
+          if (item.type === 'horizontal_rule') {
+            return (
+              <div key={index}>
+                 {/* Pass components down */}
+                <MarkdownContent content="---" components={markdownComponents} />
+               </div>
+            );
+          }
+
+          // Fallback for unknown types
+          console.warn("Unknown structured content item type:", item.type, item);
+          return (
+             <div key={index}>
+               {/* Render potentially unknown content using MarkdownContent with styles */}
+               <MarkdownContent content={item.content || JSON.stringify(item)} components={markdownComponents} />
+             </div>
+          );
         } catch (error) {
           console.error('Error rendering content item:', error, item);
           return (

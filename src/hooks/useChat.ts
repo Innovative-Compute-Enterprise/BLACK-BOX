@@ -29,7 +29,7 @@ import {
   deleteChatSessionAction,
 } from "@/src/app/chat/actions";
 import { chatCortex } from "@/src/lib/ai/cortex";
-import { getCustomInstructions, defaultCustomInstructions } from "@/src/lib/ai/prompts";
+import { getCustomInstructions } from "@/src/lib/ai/prompts";
 
 interface UseChatProps {
   sessionId?: string;
@@ -66,6 +66,7 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
 
   // --- Additional state ---
   const [userId, setUserId] = useState<string | null>(null);
+  console.log('[useChat] Initial userId:', userId);
   const [inputMessage, setInputMessage] = useState("");
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
 
@@ -134,13 +135,26 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
 
   // --- Auth Handling ---
   useEffect(() => {
+    console.log('[useChat] Setting up auth listener...');
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUserId(session?.user?.id || null);
+        const newUserId = session?.user?.id || null;
+        console.log('[useChat] Auth state changed. Event:', _event, 'New userId:', newUserId);
+        setUserId(newUserId);
       }
     );
+    
+    // Check initial auth state immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const initialUserId = session?.user?.id || null;
+      console.log('[useChat] Initial session check. userId:', initialUserId);
+      if (!userId) {
+         setUserId(initialUserId);
+      }
+    });
 
     return () => {
+      console.log('[useChat] Unsubscribing auth listener');
       authListener?.subscription.unsubscribe();
     };
   }, [supabase.auth]);
@@ -356,19 +370,17 @@ export const useChat = ({ sessionId: initialSessionId }: UseChatProps) => {
     []
   );
 
-  // Wrap the file handlers to use our processed versions
+  // This is the handler passed to ChatDock -> FileUploadButton
   const handleFilesSelected = useCallback((files: FileList) => {
-    console.log('[useChat] handleFilesSelected called with', files.length, 'files');
+    console.log(`[useChat] handleFilesSelected called. Current userId:`, userId);
+    if (!userId) {
+      console.error('[useChat] User ID not available when trying to select files.');
+      toast(createErrorToast('Authentication error. Please wait a moment and try again.'));
+      return;
+    }
+    console.log(`[useChat] Passing ${files.length} files to processFiles (useFileUpload)...`);
     processFiles(files);
-    
-    // Force a UI update by setting a temporary placeholder in the store
-    const placeholders = Array.from(files).map(file => ({
-      originalFile: file,
-      isProcessing: true
-    }));
-    console.log('[useChat] Setting placeholder files:', placeholders);
-    setSelectedFiles(placeholders);
-  }, [processFiles, setSelectedFiles]);
+  }, [userId, processFiles, toast]);
 
   const handleRemoveFile = useCallback((index: number) => {
     console.log('[useChat] handleRemoveFile called for index', index);

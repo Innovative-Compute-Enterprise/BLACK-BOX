@@ -3,7 +3,7 @@ import GreetingPanel from './GreetingPanel';
 import FeatureButton from './FeatureButton';
 import ChatIcon from '@/src/components/icons/ChatIcon';
 import VoiceIcon from '@/src/components/icons/VoiceIcon';
-
+import UserIcon from '@/src/components/icons/UserIcon';
 interface DashboardProps {
   userName: string;
   subscriptionStatus: string;
@@ -24,12 +24,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           />
           
           {/* Updated container for right-side feature buttons: grid with 3 columns */}
-          <div className="grid grid-cols-3 p-3 gap-4 overflow-y-auto h-full">
+          <div className="grid grid-cols-2 grid-rows-2 p-3 gap-4 overflow-y-auto h-full">
             {/* Chat button */}
             <FeatureButton 
               href="/chat"
               icon={<ChatIcon className="text-gray-800 w-8 h-8 dark:text-white" />}
               title="CHAT"
+              subtitle="Alpha"
             />
             
             {/* Voice coming soon */}
@@ -38,6 +39,13 @@ const Dashboard: React.FC<DashboardProps> = ({
               title="SOON"
               subtitle="Coming soon"
               isDisabled={true}
+            />
+            
+            
+            <FeatureButton 
+              href="/account"
+              icon={<UserIcon className="text-gray-800 w-9 h-9 dark:text-white" />}
+              title="ACCOUNT"
             />
           </div>
         </div>

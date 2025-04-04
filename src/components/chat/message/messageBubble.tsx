@@ -190,13 +190,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
       () => ({
         h1: (props: any) => (
           <h1
-            className="text-4xl font-bold mt-8 mb-5 pb-2 border-b-2 border-gray-300 dark:border-gray-600"
+            className="text-3xl font-bold mt-6 mb-4 pb-2 border-b border-gray-300 dark:border-gray-600"
             {...props}
           />
         ),
         h2: ({ ...props }: any) => (
           <h2
-            className="text-2xl font-bold mt-5 mb-3 border-b border-gray-200 dark:border-gray-700 pb-1"
+            className="text-2xl font-bold mt-5 mb-3 pb-1 border-b border-gray-200 dark:border-gray-700"
             {...props}
           />
         ),
@@ -207,48 +207,48 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
           />
         ),
         h4: ({ ...props }: any) => (
-          <h4 className="text-lg font-semibold mt-5 mb-4 text-gray-700 dark:text-gray-300" {...props} />
+          <h4 className="text-lg font-semibold mt-3 mb-2 text-gray-700 dark:text-gray-300" {...props} />
         ),
         p: ({ ...props }: any) => (
-          <p className="text-base leading-loose tracking-wide text-black dark:text-white" {...props} />
+          <p className="text-base leading-relaxed tracking-wide text-gray-800 dark:text-gray-200 mb-2" {...props} />
         ),
         ul: ({ ...props }: any) => (
-          <ul className="list-disc list-inside space-y-2 my-4 pl-4 text-gray-800 dark:text-gray-200" role="list" {...props} />
+          <ul className="list-disc list-inside space-y-2 my-2 pl-5 text-gray-700 dark:text-gray-300" role="list" {...props} />
         ),
         ol: ({ ...props }: any) => (
-          <ol className="list-decimal list-inside space-y-3 mb-9 mt-3 pl-4 text-gray-800 dark:text-gray-200" role="list" {...props} />
+          <ol className="list-decimal list-inside space-y-2 my-2 pl-5 text-gray-700 dark:text-gray-300" role="list" {...props} />
         ),
         li: ({ ...props }: any) => (
-          <li className="pl-2 leading-relaxed tracking-wide" {...props} />
+          <li className="pl-2 leading-relaxed tracking-wide mb-1" {...props} />
         ),
         blockquote: ({ ...props }: any) => (
-          <blockquote className="border-l-4 border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-700 italic py-2 px-4 rounded-r-md my-4" {...props} />
+          <blockquote className="border-l-4 border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-gray-800 italic py-3 px-5 rounded-r-md my-5 shadow-sm" {...props} />
         ),
         table: ({ ...props }: any) => (
-          <div className="overflow-x-auto my-4">
-            <table className="table-auto w-full text-left border-collapse rounded-sm overflow-hidden shadow-sm" {...props} />
+          <div className="overflow-x-auto my-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+            <table className="table-auto w-full text-left" {...props} />
           </div>
         ),
         th: ({ ...props }: any) => (
-          <th className="border bg-gray-100 dark:bg-gray-700 rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200" {...props} />
+          <th className="bg-gray-100 dark:bg-gray-700 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600" {...props} />
         ),
         td: ({ ...props }: any) => (
-          <td className="border px-3 py-2 rounded-md text-gray-800 dark:text-gray-200" {...props} />
+          <td className="border-b border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-800 dark:text-gray-200" {...props} />
         ),
         a: ({ ...props }: any) => (
           <a
-            className="text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
             target="_blank"
             rel="noopener noreferrer"
             {...props}
           />
         ),
         hr: ({ ...props }: any) => (
-          <hr className="border-gray-200 dark:border-gray-600 my-6" {...props} />
+          <hr className="border-gray-300 dark:border-gray-600 my-8" {...props} />
         ),
         img: ({ src, alt, ...props }: any) => (
           <Image
-            className="max-w-full h-auto rounded-lg shadow-sm my-4"
+            className="max-w-full h-auto rounded-lg shadow-md my-5 border border-gray-200 dark:border-gray-700"
             src={src}
             alt={alt || "Markdown Image"}
             width={600}
@@ -262,17 +262,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
           const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
           return inline ? (
             <code
-              className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded-md text-sm font-mono"
+              className="bg-gray-200 dark:bg-gray-700 px-1.5 py-1 rounded text-sm font-mono mx-0.5"
               {...props}
             >
               {children}
             </code>
           ) : (
-            <div className="relative block not-prose">
-              <pre className="block bg-gray-900 dark:bg-black overflow-x-auto rounded-md p-4 my-4">
+            <div className="relative block not-prose my-6">
+              <pre className="block bg-gray-900 dark:bg-black overflow-x-auto rounded-md p-4 shadow-lg">
                 <code
                   id={codeId}
-                  className="font-mono text-sm text-gray-100"
+                  className="font-mono text-sm text-gray-100 whitespace-pre"
                   {...props}
                 >
                   {children}
@@ -285,7 +285,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
                     copyToClipboard(codeElement.textContent || "", codeId);
                   }
                 }}
-                className="absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 text-gray-200 p-1 rounded text-xs"
+                className="absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 text-gray-200 p-1.5 rounded text-xs transition-colors duration-150"
                 aria-label="Copy code to clipboard"
               >
                 {copied === codeId ? "Copied!" : "Copy"}
@@ -444,7 +444,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
                   {textItems.map((contentItem, idx) => (
                     <div
                       key={`text-${idx}`}
-                      className="text-white text-base leading-loose tracking-wider"
+                      className="text-white text-base leading-loose tracking-wider whitespace-pre-wrap"
                     >
                       {contentItem.text}
                     </div>
@@ -565,7 +565,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
                       </div>
                     }
                   >
-                    <StructuredContent key={idx} content={structuredContent} />
+                    <StructuredContent key={idx} content={structuredContent} markdownComponents={markdownStyleComponents} />
                   </ErrorBoundary>
                 );
               }
@@ -582,7 +582,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
                 >
                   <ReactMarkdown
                     key={idx}
-                    className="markdown-body dark:markdown-body-dark text-base leading-loose"
+                    className="text-base leading-loose whitespace-pre-wrap"
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeSanitize]}
                     components={markdownStyleComponents}
@@ -681,9 +681,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
             </div>
           }
         >
-          <div className={`relative w-full ${message.role === "user" ? "flex justify-end" : ""}`}>
+          <div className={`relative w-full prose dark:prose-invert ${message.role === "user" ? "flex justify-end" : ""}`}>
             <div 
-              className={`prose dark:prose-invert w-full ${
+              className={`w-full ${ 
                 message.role === "assistant" ? "dark:text-white text-black" : ""
               }`}
             >
@@ -695,7 +695,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
                   <>
                     {/* For assistant messages, render content and files separately */}
                     <div>
-                      {messageContent}
+                      {/* Use ErrorBoundary around potentially complex rendering */}
+                      <ErrorBoundary 
+                        key={`${message.id}-content-boundary`}
+                        fallback={
+                          <div className="text-red-500 p-3 border border-red-300 rounded-md">
+                            Failed to render message content.
+                          </div>
+                        }
+                      >
+                        {messageContent}
+                      </ErrorBoundary>
                     </div>
                     {renderFileAttachments()}
                   </>

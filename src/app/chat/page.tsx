@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import Loading from '@/src/components/chat/message/loading';
 import { getUserDetails } from '@/src/utils/supabase/queries';
+import { getSubscription } from '@/src/utils/supabase/queries';
 
 export default async function ChatPage() {
   const supabase = await createClient();
@@ -18,14 +19,18 @@ export default async function ChatPage() {
     redirect('/0auth');
   }
 
-  // Fetch additional user details for the full name
-  const [userDetails] = await Promise.all([
+  // Fetch additional user details for the full name and subscription
+  const [userDetails, subscription] = await Promise.all([
     getUserDetails(supabase),
+    getSubscription(supabase)
   ]);
 
   return (
     <Suspense fallback={<Loading />}>
-      <Chat userName={userDetails?.full_name ?? ''} />
+      <Chat 
+        userName={userDetails?.full_name ?? ''} 
+        subscription={subscription}
+      />
     </Suspense>
   );
 }

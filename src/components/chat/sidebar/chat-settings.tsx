@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from "@/src/components/shadcn/dialog";
 import { useTheme } from "@/src/context/ThemeContext";
-import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { Textarea } from "@/src/components/shadcn/textarea";
 import { Button } from "@/src/components/shadcn/button";
@@ -247,11 +246,7 @@ export function Settings({ isOpen, onClose }: SettingsProps) {
 
           <div className="w-3/4 p-6 overflow-y-auto relative">
             <DialogTitle className="sr-only">Settings</DialogTitle>
-            
-            <Button variant="ghost" size="icon" className="absolute top-3 right-3" onClick={onClose}>
-                <X className="h-5 w-5" />
-            </Button>
-            
+
             {activeTab === 'account' && (
               <div>
                 <h3 className="text-2xl font-semibold mb-6">Account</h3>

@@ -6,6 +6,7 @@ import { useChat } from "@/src/hooks/useChat";
 import MessageDisplay from "./MessageDisplay";
 import ChatDock from "./chat-dock";
 import ChatHeader from "./chat-header";
+import { SubscriptionWithProduct } from "@/src/types/types";
 
 // Define types
 // interface ProcessedFile {
@@ -65,9 +66,11 @@ import ChatHeader from "./chat-header";
 interface ChatProps {
   sessionId?: string;
   userName: string;
+  // If subscription is needed by ChatHeader, it needs to be passed here
+  subscription?: SubscriptionWithProduct | null; // Example
 }
 
-export function Chat({ sessionId, userName }: ChatProps) {
+export function Chat({ sessionId, userName, subscription }: ChatProps) { // Add subscription if passed
   const { model, setModel, isModelLocked } = useChatContext();
   const isTransitioningRef = useRef(false);
   const previousMessagesLengthRef = useRef(0);
@@ -77,6 +80,7 @@ export function Chat({ sessionId, userName }: ChatProps) {
     inputMessage,
     isSubmitting,
     selectedFiles,
+    userId,
     setInputMessage,
     handleSendMessage,
     handleFilesSelected,
@@ -85,6 +89,9 @@ export function Chat({ sessionId, userName }: ChatProps) {
     toggleWebSearch,
     toggleModelLock,
     isProcessingFiles,
+    chatHistories,         // Added
+    loadChatFromHistory,   // Added (for onChatSelection)
+    handleDeleteChat,      // Added (for onDeleteChat)
   } = useChat({ sessionId: sessionId });
 
   // Track when transitions occur from messages -> empty state
@@ -152,7 +159,8 @@ export function Chat({ sessionId, userName }: ChatProps) {
     isModelLocked,
     toggleWebSearch,
     toggleModelLock,
-    isNewChatTransition: isTransitioningRef.current
+    isNewChatTransition: isTransitioningRef.current,
+    isFileUploadDisabled: !userId,
   }), [
     userName,
     inputMessage, 
@@ -168,6 +176,7 @@ export function Chat({ sessionId, userName }: ChatProps) {
     isModelLocked, 
     toggleWebSearch, 
     toggleModelLock,
+    userId,
   ]);
 
   // Use memoized components to prevent unnecessary re-renders
@@ -175,8 +184,19 @@ export function Chat({ sessionId, userName }: ChatProps) {
     <ChatHeader 
       handleNewChat={handleNewChatWithTransition} 
       toggleModelLock={toggleModelLock} 
+      subscription={subscription}
+      chatHistories={chatHistories}
+      onChatSelection={loadChatFromHistory}
+      onDeleteChat={handleDeleteChat}
     />
-  ), [handleNewChatWithTransition, toggleModelLock]);
+  ), [
+    handleNewChatWithTransition,
+    toggleModelLock,
+    subscription,
+    chatHistories,
+    loadChatFromHistory,
+    handleDeleteChat,
+  ]);
 
   const messageDisplayComponent = useMemo(() => (
     <MessageDisplay messages={messages} />

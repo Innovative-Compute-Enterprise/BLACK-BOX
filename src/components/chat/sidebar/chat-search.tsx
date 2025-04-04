@@ -9,8 +9,6 @@ import {
 } from "@/src/components/shadcn/command";
 import { Search, MessageSquareText, Share, Pencil, Trash2, ExternalLink, Loader2, PlusCircle } from "lucide-react";
 
-// Define a basic structure for preview messages
-// Export the PreviewMessage interface
 export interface PreviewMessage {
   id: string;
   role: 'user' | 'assistant' | string; // Allow other roles if needed

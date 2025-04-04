@@ -46,11 +46,13 @@ interface InputAreaProps {
   setModel: (model: string) => void;
   isModelLocked: boolean;
   toggleModelLock?: (locked: boolean) => void;
+  isFileUploadDisabled?: boolean;
 }
 
 interface FilesDisplayProps {
   files: ProcessedFile[];
   onRemoveFile: (index: number) => void;
+  isFileUploadDisabled?: boolean;
 }
 
 interface ChatDockProps {
@@ -69,6 +71,7 @@ interface ChatDockProps {
   toggleWebSearch: (active: boolean) => void;
   toggleModelLock?: (locked: boolean) => void;
   isNewChatTransition?: boolean;
+  isFileUploadDisabled?: boolean;
 }
 
 const ButtonWrapper: React.FC<{ children: React.ReactNode }> = ({
@@ -88,7 +91,8 @@ const InputArea = React.memo(({
   model,
   setModel,
   isModelLocked,
-  toggleModelLock
+  toggleModelLock,
+  isFileUploadDisabled,
 }: InputAreaProps) => (
   <div className="flex flex-col dark:border-[#ffffff]/20 border-black/10 border bg-white dark:bg-black p-3 rounded-3xl shadow-[0_0_12px_rgba(0,0,0,0.10)] dark:shadow-[0_0_12px_rgba(255,255,255,0.11)]">
     <div className="flex items-start">
@@ -98,7 +102,7 @@ const InputArea = React.memo(({
     </div>
     <div className="flex items-center justify-between w-full">
       <ButtonWrapper>
-        {showFileButton && <FileUploadButton onFilesSelected={onFilesSelected} />}
+        {showFileButton && <FileUploadButton onFilesSelected={onFilesSelected} disabled={isFileUploadDisabled} />}
         <WebSearchButton toggleWebSearch={toggleWebSearch} />
         <ModelSelector model={model} setModel={setModel} isModelLocked={isModelLocked} toggleModelLock={toggleModelLock} />
       </ButtonWrapper>
@@ -148,6 +152,7 @@ function ChatDock(props: ChatDockProps) {
     toggleWebSearch,
     toggleModelLock,
     isNewChatTransition = false,
+    isFileUploadDisabled,
   } = props;
 
   const { model: contextModel } = useContext(ChatContext);
@@ -181,7 +186,8 @@ function ChatDock(props: ChatDockProps) {
     model,
     setModel,
     isModelLocked,
-    toggleModelLock
+    toggleModelLock,
+    isFileUploadDisabled,
   }), [
     input,
     setInput,
@@ -194,7 +200,8 @@ function ChatDock(props: ChatDockProps) {
     model,
     setModel,
     isModelLocked,
-    toggleModelLock
+    toggleModelLock,
+    isFileUploadDisabled,
   ]);
 
   const renderEmptyStateContent = useMemo(() => (
@@ -218,7 +225,7 @@ function ChatDock(props: ChatDockProps) {
             initial={isNewChatTransition ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.7, ease: 'easeOut', delay: isNewChatTransition ? 0 : 0.3 }}
-            className="max-w-3xl mx-auto px-4 w-full mb-[20vh]"
+            className="max-w-3xl mx-auto px-4 w-full"
           >
             <FilesDisplay files={selectedFiles} onRemoveFile={onRemoveFile} />
             <InputArea {...memoizedInputAreaProps} />
@@ -237,11 +244,11 @@ function ChatDock(props: ChatDockProps) {
       exit={{ opacity: 0 }}
       className="sticky bottom-0 overflow-visible dark:bg-black bg-white z-0"
     >
-      <div className="max-w-3xl mx-auto pb-1.5 w-full relative">
+      <div className="max-w-3xl mx-auto pb-1 w-full relative">
         <FilesDisplay files={selectedFiles} onRemoveFile={onRemoveFile} />
         <InputArea {...memoizedInputAreaProps} />
       </div>
-      <p className="text-xs text-center text-zinc-400 dark:text-zinc-500 pb-1.5">
+      <p className="text-xs text-center text-zinc-400 dark:text-zinc-500 pb-1">
        Gerado por IA , sempre verifique a informação.
       </p>
     </motion.div>
